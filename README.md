@@ -1,2 +1,0 @@
-# Organizador de finanças
-O Gerenciador Financeiro Pessoal Inteligente tem como objetivo central oferecer aos usuários uma ferramenta acessível, prática e intuitiva para o controle e centralização das suas finanças pessoais diárias. O foco principal da aplicação é entregar uma solução funcional que permita o registro organizado de receitas e despesas, o acompanhamento claro de saldos e categorias, a sinalização visual preventiva de vencimentos de contas e o anexo de comprovantes digitais (PDF e Imagens).
