@@ -3,32 +3,25 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('users')
-export class User {
+@Entity('usuario')
+export class Usuario {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  name: string;
+  @Column({ length: 100 })
+  nome: string;
 
-  @Column({ unique: true })
+  @Column({ length: 100, unique: true })
   email: string;
 
-  @Column({ nullable: true, select: false })
-  password: string | null;
+  @Column({ name: 'senha_hash', length: 255 })
+  senhaHash: string;
 
-  @Column({ nullable: true, unique: true })
-  googleId: string | null;
-
-  @Column({ nullable: true })
-  avatar: string | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @CreateDateColumn({
+    name: 'criado_em',
+    type: 'timestamp',
+  })
+  criadoEm: Date;
 }

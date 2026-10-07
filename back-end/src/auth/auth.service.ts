@@ -18,96 +18,62 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const email = dto.email.trim().toLowerCase();
+
     const existingUser = await this.usersService.findByEmail(email);
 
     if (existingUser) {
       throw new ConflictException('E-mail já cadastrado');
     }
 
-    const password = await bcrypt.hash(dto.password, 10);
+    const senhaHash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.usersService.create({
-      name: dto.name.trim(),
+    const usuario = await this.usersService.create({
+      nome: dto.name.trim(),
       email,
-      password,
+      senhaHash,
     });
 
-    return this.generateToken(user);
+    return this.generateToken(usuario);
   }
 
   async login(dto: LoginDto) {
     const email = dto.email.trim().toLowerCase();
-    const user = await this.usersService.findByEmail(email);
 
-    if (!user || !user.password) {
+    const usuario = await this.usersService.findByEmail(email);
+
+    if (!usuario) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    const validPassword = await bcrypt.compare(dto.password, user.password);
+    const senhaValida = await bcrypt.compare(
+      dto.password,
+      usuario.senhaHash,
+    );
 
-    if (!validPassword) {
+    if (!senhaValida) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    return this.generateToken(user);
+    return this.generateToken(usuario);
   }
 
-  async loginWithGoogle(profile: {
-    googleId: string;
-    email?: string;
-    name: string;
-    avatar?: string | null;
-  }) {
-    if (!profile.email) {
-      throw new UnauthorizedException(
-        'O Google não retornou um e-mail válido',
-      );
-    }
-
-    const email = profile.email.toLowerCase();
-    let user = await this.usersService.findByGoogleId(profile.googleId);
-
-    if (!user) {
-      user = await this.usersService.findByEmail(email);
-
-      if (user) {
-        user = await this.usersService.update(user.id, {
-          googleId: profile.googleId,
-          avatar: profile.avatar || null,
-        });
-      } else {
-        user = await this.usersService.create({
-          name: profile.name,
-          email,
-          googleId: profile.googleId,
-          avatar: profile.avatar || null,
-          password: null,
-        });
-      }
-    }
-
-    return this.generateToken(user);
-  }
-
-  generateToken(user: {
+  generateToken(usuario: {
     id: number;
-    name: string;
+    nome: string;
     email: string;
-    avatar?: string | null;
   }) {
     const payload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
+      sub: usuario.id,
+      email: usuario.email,
+      nome: usuario.nome,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar || null,
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
       },
     };
   }

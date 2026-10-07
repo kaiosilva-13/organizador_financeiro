@@ -1,21 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { Usuario } from './user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly repository: Repository<User>,
+    @InjectRepository(Usuario)
+    private readonly repository: Repository<Usuario>,
   ) {}
 
   findByEmail(email: string) {
-    return this.repository
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .where('user.email = :email', { email })
-      .getOne();
+    return this.repository.findOne({
+      where: { email },
+    });
   }
 
   findById(id: number) {
@@ -24,18 +22,12 @@ export class UsersService {
     });
   }
 
-  findByGoogleId(googleId: string) {
-    return this.repository.findOne({
-      where: { googleId },
-    });
+  create(data: Partial<Usuario>) {
+    const usuario = this.repository.create(data);
+    return this.repository.save(usuario);
   }
 
-  create(data: Partial<User>) {
-    const user = this.repository.create(data);
-    return this.repository.save(user);
-  }
-
-  async update(id: number, data: Partial<User>) {
+  async update(id: number, data: Partial<Usuario>) {
     await this.repository.update(id, data);
     return this.findById(id);
   }

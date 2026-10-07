@@ -8,8 +8,40 @@ function LoginCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "E-mail ou senha inválidos.");
+        return;
+      }
+
+      localStorage.setItem("access_token", data.access_token);
+
+      alert("Login realizado com sucesso!");
+
+      window.location.href = "/";
+    } catch {
+      alert("Não foi possível conectar ao servidor.");
+    }
+  }
+
+  function handleGoogleLogin() {
+    window.location.href = "http://localhost:3000/auth/google";
   }
 
   return (
@@ -19,6 +51,7 @@ function LoginCard() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             Entrar
           </h2>
+
           <p className="mt-2 text-sm text-slate-500">
             Acesse sua conta para continuar.
           </p>
@@ -70,14 +103,17 @@ function LoginCard() {
 
         <div className="my-6 flex items-center gap-4">
           <span className="h-px flex-1 bg-slate-200" />
+
           <span className="text-xs font-medium text-slate-400 uppercase">
             ou
           </span>
+
           <span className="h-px flex-1 bg-slate-200" />
         </div>
 
         <button
           type="button"
+          onClick={handleGoogleLogin}
           className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-lg border border-slate-900 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
         >
           <GoogleIcon />
