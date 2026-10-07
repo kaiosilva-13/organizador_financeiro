@@ -1,0 +1,33 @@
+// Exemplo de integração sem alterar o visual do seu LoginCard.
+// Adapte apenas os nomes das variáveis/handler existentes no seu componente.
+
+async function handleLogin(email: string, password: string) {
+  try {
+    const response = await fetch('http://localhost:3000/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || 'E-mail ou senha inválidos.');
+      return;
+    }
+
+    localStorage.setItem('access_token', data.access_token);
+
+    // Continue aqui para a página inicial do sistema.
+    // Exemplo:
+    // window.location.href = '/';
+  } catch {
+    alert('Não foi possível conectar ao servidor.');
+  }
+}
+
+function handleGoogleLogin() {
+  window.location.href = 'http://localhost:3000/auth/google';
+}
