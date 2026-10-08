@@ -1,12 +1,17 @@
-import HeroBanner from "./components/login/HeroBanner";
-import LoginCard from "./components/login/LoginCard";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
   return (
-    <div className="flex min-h-svh w-full flex-col lg:flex-row">
-      <HeroBanner />
-      <LoginCard />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Register />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

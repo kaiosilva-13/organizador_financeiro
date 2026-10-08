@@ -2,27 +2,30 @@ import { useId, useState, type InputHTMLAttributes } from "react";
 
 import { Eye, EyeOff } from "lucide-react";
 
-type InputGroupProps = {
+type InputProps = {
   label: string;
   type?: InputHTMLAttributes<HTMLInputElement>["type"];
   placeholder?: string;
   toggleVisibility?: boolean;
+  errorMessage?: string;
 } & Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "type" | "className" | "id" | "children"
 >;
 
-function InputGroup({
+function Input({
   label,
   type = "text",
   placeholder,
   toggleVisibility = false,
+  errorMessage,
   ...inputProps
-}: InputGroupProps) {
+}: InputProps) {
   const id = useId();
   const [isVisible, setIsVisible] = useState(false);
 
   const inputType = toggleVisibility && isVisible ? "text" : type;
+  const hasError = Boolean(errorMessage);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -36,7 +39,12 @@ function InputGroup({
           id={id}
           type={inputType}
           placeholder={placeholder}
-          className="h-11 w-full rounded-lg border border-slate-900 bg-white px-3.5 text-sm text-slate-900 transition outline-none placeholder:text-slate-400 focus:border-[#4F26E9] focus:ring-1 focus:ring-[#4F26E9]"
+          aria-invalid={hasError}
+          className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-slate-900 transition outline-none placeholder:text-slate-400 focus:ring-1 ${
+            hasError
+              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+              : "border-slate-900 focus:border-[#4F26E9] focus:ring-[#4F26E9]"
+          }`}
         />
 
         {toggleVisibility && (
@@ -50,8 +58,14 @@ function InputGroup({
           </button>
         )}
       </div>
+
+      {hasError && (
+        <p role="alert" className="text-xs font-medium text-red-500">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }
 
-export default InputGroup;
+export default Input;
