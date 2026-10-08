@@ -1,7 +1,13 @@
 import logoImg from "../../assets/logo_projeto.png";
 import { ShieldCheck } from "lucide-react";
 
-function HeroBanner() {
+type HeroBannerProps = {
+  tag: string;
+  title: string;
+  description: string;
+};
+
+function HeroBanner({ tag, title, description }: HeroBannerProps) {
   return (
     <aside className="relative hidden w-1/2 flex-col justify-between bg-[#0B085C] p-12 lg:flex">
       {/* Topo: Logo + Nome do Projeto */}
@@ -21,18 +27,17 @@ function HeroBanner() {
       <div className="max-w-md">
         {/* Categoria sem bloco/borda */}
         <span className="text-xs font-bold tracking-widest text-[#635BFF] uppercase">
-          ORGANIZADOR DE FINANÇAS
+          {tag}
         </span>
 
         {/* Título Principal */}
         <h1 className="mt-4 text-5xl font-bold leading-tight text-white">
-          Seu dinheiro, em ordem.
+          {title}
         </h1>
 
         {/* Subtítulo */}
         <p className="mt-4 text-base leading-relaxed text-indigo-100/80">
-          Acompanhe seus gastos, organize metas e tome decisões com confiança em
-          um só lugar.
+          {description}
         </p>
 
         {/* Selo de Proteção sem caixa/borda */}

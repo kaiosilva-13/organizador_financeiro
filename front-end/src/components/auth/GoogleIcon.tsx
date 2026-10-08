@@ -18,7 +18,7 @@ function GoogleIcon({ size = 18 }: { size?: number }) {
         d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.28 6.39l3.99 2.84C6.22 6.86 8.87 4.75 12 4.75Z"
       />
     </svg>
-  )
+  );
 }
 
-export default GoogleIcon
+export default GoogleIcon;
