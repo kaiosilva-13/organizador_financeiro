@@ -1,75 +1,56 @@
-# React + TypeScript + Vite
+# Organizaê — Front-end
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação web do Organizaê, organizador financeiro pessoal. Interface desenvolvida com React, TypeScript, Tailwind CSS e ícones do lucide-react (build com Vite).
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estrutura
 
 ```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+src/
+├── assets/                     # Imagens estáticas (logo do projeto)
+├── components/
+│   └── auth/                   # Componentes reutilizáveis das telas de autenticação
+│       ├── AuthLayout.tsx      # Layout em 2 colunas (banner + formulário)
+│       ├── HeroBanner.tsx      # Painel de branding, configurável via props
+│       ├── Input.tsx           # Campo de formulário com label, erro e toggle de senha
+│       ├── Button.tsx          # Botão com variantes "primary" e "outline"
+│       └── GoogleIcon.tsx      # Ícone social do Google
+├── pages/
+│   ├── Login.tsx               # Tela de login (/login)
+│   └── Register.tsx            # Tela de cadastro (/cadastro)
+├── App.tsx                     # Configuração das rotas (react-router-dom)
+├── index.css                   # Tema Tailwind (cores da marca)
+└── main.tsx                    # Ponto de entrada da aplicação
 ```
+
+## Rotas
+
+| Rota        | Tela                                        |
+| ----------- | ------------------------------------------- |
+| `/`         | Redireciona para `/login`                   |
+| `/login`    | Autenticação (e-mail/senha e Google)        |
+| `/cadastro` | Criação de conta (e-mail, senha e Google)   |
+
+A navegação entre as telas é feita pelos links "Registre-se" (login → cadastro) e "Entrar" (cadastro → login).
+
+## Screenshots
+
+- `references/tela1.png` — Tela de login
+- `references/tela2.png` — Tela de cadastro
+
+## Como executar
+
+```bash
+npm install
+npm run dev
+```
+
+A aplicação estará disponível em `http://localhost:5173`. O backend esperado roda em `http://localhost:3000`.
+
+## Scripts disponíveis
+
+| Comando          | Descrição                              |
+| ---------------- | -------------------------------------- |
+| `npm run dev`    | Sobe o servidor de desenvolvimento     |
+| `npm run build`  | Gera o build de produção em `dist/`    |
+| `npm run lint`   | Verifica o código com ESLint           |
+| `npm run preview`| Visualiza o build de produção          |
