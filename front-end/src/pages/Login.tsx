@@ -1,12 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-import AuthLayout from "../auth/AuthLayout";
-import Button from "../auth/Button";
-import GoogleIcon from "../auth/GoogleIcon";
-import Input from "../auth/Input";
+import AuthLayout from "../components/auth/AuthLayout";
+import Button from "../components/auth/Button";
+import GoogleIcon from "../components/auth/GoogleIcon";
+import Input from "../components/auth/Input";
 
-function LoginCard() {
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -123,15 +124,15 @@ function LoginCard() {
 
       <p className="mt-8 text-center text-sm text-slate-600">
         Não tem conta?{" "}
-        <a
-          href="#registro"
+        <Link
+          to="/cadastro"
           className="font-bold text-[#4F26E9] underline transition hover:text-[#411DCB]"
         >
           Registre-se
-        </a>
+        </Link>
       </p>
     </AuthLayout>
   );
 }
 
-export default LoginCard;
+export default Login;

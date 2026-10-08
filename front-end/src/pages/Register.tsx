@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 import AuthLayout from "../components/auth/AuthLayout";
@@ -110,12 +111,12 @@ function Register() {
 
       <p className="mt-8 text-center text-sm text-slate-600">
         Já possui uma conta?{" "}
-        <a
-          href="#login"
+        <Link
+          to="/login"
           className="font-bold text-[#4F26E9] underline transition hover:text-[#411DCB]"
         >
           Entrar
-        </a>
+        </Link>
       </p>
     </AuthLayout>
   );
