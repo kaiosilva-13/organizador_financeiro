@@ -93,12 +93,12 @@ function Login() {
         />
 
         <div className="-mt-1 text-right">
-          <a
-            href="#recuperar-senha"
+          <Link
+            to="/esqueci-senha"
             className="text-sm font-semibold text-[#4F26E9] underline transition hover:text-[#411DCB]"
           >
             Esqueci minha senha
-          </a>
+          </Link>
         </div>
 
         <Button type="submit" className="mt-2">
