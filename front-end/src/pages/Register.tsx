@@ -15,7 +15,7 @@ function Register() {
     string | undefined
   >(undefined);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (password !== confirmPassword) {
@@ -24,6 +24,25 @@ function Register() {
     }
 
     setConfirmPasswordError(undefined);
+
+    try {
+      const response = await fetch("http://localhost:3000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        alert("Conta criada com sucesso!");
+        window.location.href = "/login";
+      } else {
+        const data = await response.json();
+        alert(data.message || "Erro ao cadastrar.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao conectar com o servidor.");
+    }
   }
 
   function handleConfirmPasswordChange(event: ChangeEvent<HTMLInputElement>) {
