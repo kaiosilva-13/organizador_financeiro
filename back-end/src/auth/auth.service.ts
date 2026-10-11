@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import {ConflictException , Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -27,14 +23,37 @@ export class AuthService {
 
     const senhaHash = await bcrypt.hash(dto.password, 10);
 
+    const nomeRandom = email.split('@')[0]; // Nome gerado com base no email enviado
+
     const usuario = await this.usersService.create({
-      nome: dto.name.trim(),
+      nome: nomeRandom.charAt(0).toUpperCase() + nomeRandom.slice(1), // Define a primeira letra como maiúscula
       email,
       senhaHash,
     });
 
     return this.generateToken(usuario);
   }
+  async validateGoogleUser(googleUser: {
+  googleId: string;
+  email: string;
+  name: string;
+  avatar: string | null;
+}) {
+  const email = googleUser.email.trim().toLowerCase();
+
+ 
+  let usuario = await this.usersService.findByEmail(email);
+
+  if (!usuario) {
+    usuario = await this.usersService.create({
+      nome: googleUser.name,
+      email: email,
+      senhaHash: '',
+    });
+  }
+
+  return this.generateToken(usuario);
+}
 
   async login(dto: LoginDto) {
     const email = dto.email.trim().toLowerCase();
