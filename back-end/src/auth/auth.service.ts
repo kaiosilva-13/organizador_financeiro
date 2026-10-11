@@ -33,6 +33,27 @@ export class AuthService {
 
     return this.generateToken(usuario);
   }
+  async validateGoogleUser(googleUser: {
+  googleId: string;
+  email: string;
+  name: string;
+  avatar: string | null;
+}) {
+  const email = googleUser.email.trim().toLowerCase();
+
+ 
+  let usuario = await this.usersService.findByEmail(email);
+
+  if (!usuario) {
+    usuario = await this.usersService.create({
+      nome: googleUser.name,
+      email: email,
+      senhaHash: '',
+    });
+  }
+
+  return this.generateToken(usuario);
+}
 
   async login(dto: LoginDto) {
     const email = dto.email.trim().toLowerCase();
