@@ -37,20 +37,20 @@ export class AuthController {
   googleLogin() {}
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  googleCallback(@Req() req: any, @Res() res: Response) {
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:5173';
+@UseGuards(AuthGuard('google'))
+async googleCallback(@Req() req: any, @Res() res: Response) {
+  const frontendUrl =
+    this.configService.get<string>('FRONTEND_URL') ||
+    'http://localhost:5173';
 
-    const token = this.authService.generateToken(req.user);
+  const token = await this.authService.validateGoogleUser(req.user);
 
-    return res.redirect(
-      `${frontendUrl}/auth/callback?token=${encodeURIComponent(
-        token.access_token,
-      )}`,
-    );
-  }
+  return res.redirect(
+    `${frontendUrl}/auth/callback?token=${encodeURIComponent(
+      token.access_token,
+    )}`,
+  );
+}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
