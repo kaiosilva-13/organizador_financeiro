@@ -37,7 +37,7 @@ function SummaryCard({
   return (
     <article className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-slate-500">{label}</span>
+        <span className="text-sm font-semibold text-black">{label}</span>
 
         <span
           className={`flex h-10 w-10 items-center justify-center rounded-xl ${toneClasses[tone]}`}

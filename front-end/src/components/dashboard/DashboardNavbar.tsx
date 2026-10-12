@@ -32,7 +32,7 @@ function DashboardNavbar({
           <img
             src={logoImg}
             alt="Organizaê"
-            className="h-9 w-9 select-none object-contain"
+            className="h-[52px] w-[52px] select-none object-contain"
             draggable={false}
           />
 
