@@ -37,7 +37,7 @@ function Login() {
 
       alert("Login realizado com sucesso!");
 
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     } catch {
       alert("Não foi possível conectar ao servidor.");
     }
