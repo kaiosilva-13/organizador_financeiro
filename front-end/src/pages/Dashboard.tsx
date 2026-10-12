@@ -15,6 +15,7 @@ import {
 import DashboardNavbar, {
   type DashboardNavItem,
 } from "../components/dashboard/DashboardNavbar";
+import DashboardCard from "../components/dashboard/DashboardCard";
 import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
 
@@ -199,12 +200,8 @@ function Dashboard() {
         </section>
 
         <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {hasPurchases ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900">
-                Controle de compras
-              </h3>
-
+          <DashboardCard title="Controle de compras">
+            {hasPurchases ? (
               <ul className="mt-4 flex flex-col gap-3">
                 {purchases.map((purchase) => (
                   <li
@@ -221,21 +218,17 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : (
-            <EmptyStateCard
-              icon={CalendarDays}
-              title="Cadastre e acompanhe suas compras"
-              description="Registre compras parceladas e bens como carro ou casa para ver quanto já foi pago e quanto ainda falta."
-            />
-          )}
+            ) : (
+              <EmptyStateCard
+                icon={CalendarDays}
+                title="Cadastre e acompanhe suas compras"
+                description="Registre compras parceladas e bens como carro ou casa para ver quanto já foi pago e quanto ainda falta."
+              />
+            )}
+          </DashboardCard>
 
-          {hasCategories ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900">
-                Gastos por categoria
-              </h3>
-
+          <DashboardCard title="Gastos por categoria">
+            {hasCategories ? (
               <ul className="mt-4 flex flex-col gap-3">
                 {categories.map((category) => (
                   <li
@@ -255,23 +248,19 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : (
-            <EmptyStateCard
-              icon={Tag}
-              title="Nenhuma despesa registrada"
-              description="Quando você cadastrar despesas, verá aqui como seus gastos se distribuem por categoria."
-            />
-          )}
+            ) : (
+              <EmptyStateCard
+                icon={Tag}
+                title="Nenhuma despesa registrada"
+                description="Quando você cadastrar despesas, verá aqui como seus gastos se distribuem por categoria."
+              />
+            )}
+          </DashboardCard>
         </section>
 
         <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {hasTransactions ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900">
-                Movimentações recentes
-              </h3>
-
+          <DashboardCard title="Movimentações recentes">
+            {hasTransactions ? (
               <ul className="mt-4 flex flex-col gap-3">
                 {transactions.map((transaction) => (
                   <li
@@ -297,29 +286,22 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : (
-            <EmptyStateCard
-              icon={FileText}
-              title="Tudo pronto para o seu primeiro lançamento"
-              description="Adicione suas receitas e despesas para começar a acompanhar sua vida financeira em tempo real."
-              actionLabel="Adicionar lançamento"
-              actionVariant="primary"
-            />
-          )}
+            ) : (
+              <EmptyStateCard
+                icon={FileText}
+                title="Tudo pronto para o seu primeiro lançamento"
+                description="Adicione suas receitas e despesas para começar a acompanhar sua vida financeira em tempo real."
+                actionLabel="Adicionar lançamento"
+                actionVariant="primary"
+              />
+            )}
+          </DashboardCard>
 
-          {hasGoals ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900">
-                Metas financeiras
-              </h3>
-
+          <DashboardCard title="Metas financeiras">
+            {hasGoals ? (
               <ul className="mt-4 flex flex-col gap-3">
                 {goals.map((goal) => (
-                  <li
-                    key={goal.id}
-                    className="flex flex-col gap-1.5 text-sm"
-                  >
+                  <li key={goal.id} className="flex flex-col gap-1.5 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-medium text-slate-700">
                         {goal.title}
@@ -344,16 +326,16 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : (
-            <EmptyStateCard
-              icon={Target}
-              title="Dê um destino aos seus planos"
-              description="Crie metas financeiras e acompanhe o quanto falta para conquistar cada objetivo."
-              actionLabel="Criar primeira meta"
-              actionVariant="outline"
-            />
-          )}
+            ) : (
+              <EmptyStateCard
+                icon={Target}
+                title="Dê um destino aos seus planos"
+                description="Crie metas financeiras e acompanhe o quanto falta para conquistar cada objetivo."
+                actionLabel="Criar primeira meta"
+                actionVariant="outline"
+              />
+            )}
+          </DashboardCard>
         </section>
 
         {isLoading && (
