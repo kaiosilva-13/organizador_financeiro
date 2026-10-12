@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -9,13 +10,13 @@ export default function AuthCallback() {
     const token = searchParams.get("token");
 
     if (token) {
-      localStorage.setItem("token", token);
-      navigate("/login", { replace: true });
+      localStorage.setItem("access_token", token);
+      navigate("/dashboard", { replace: true });
     } else {
       alert("Não foi possível autenticar com o Google. Tente novamente.");
-      navigate("/cadastro", { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [searchParams, navigate]);
 
-  return null; 
+  return null;
 }
