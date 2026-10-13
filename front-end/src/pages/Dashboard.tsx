@@ -63,13 +63,58 @@ export type Goal = {
 
 function Dashboard() {
   const [activeNav, setActiveNav] = useState("overview");
-  const [userName] = useState("Kaio");
+  const [userName, setUserName] = useState("Usuário");
   const [isLoading, setIsLoading] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories] = useState<CategorySummary[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAuthenticatedUser() {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        window.location.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem("access_token");
+          window.location.replace("/login");
+          return;
+        }
+
+        const user = await response.json();
+
+        if (isMounted) {
+          setUserName(user.name || user.nome || "Usuário");
+        }
+      } catch {
+        if (isMounted) {
+          setUserName("Usuário");
+        }
+      }
+    }
+
+    loadAuthenticatedUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
 
   useEffect(() => {
     let isMounted = true;

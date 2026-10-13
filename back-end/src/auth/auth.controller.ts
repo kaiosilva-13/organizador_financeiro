@@ -20,7 +20,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -34,32 +34,32 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin() {}
+  googleLogin() { }
 
   @Get('google/callback')
-@UseGuards(AuthGuard('google'))
-async googleCallback(@Req() req: any, @Res() res: Response) {
-  const frontendUrl =
-    this.configService.get<string>('FRONTEND_URL') ||
-    'http://localhost:5173';
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: any, @Res() res: Response) {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      'http://localhost:5173';
 
-  const token = await this.authService.validateGoogleUser(req.user);
+    const token = await this.authService.validateGoogleUser(req.user);
 
-  return res.redirect(
-    `${frontendUrl}/auth/callback?token=${encodeURIComponent(
-      token.access_token,
-    )}`,
-  );
-}
+    return res.redirect(
+      `${frontendUrl}/auth/callback?token=${encodeURIComponent(
+        token.access_token,
+      )}`,
+    );
+  }
+
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: any) {
     return {
       id: req.user.id,
-      name: req.user.name,
+      name: req.user.nome,
       email: req.user.email,
-      avatar: req.user.avatar || null,
     };
   }
 
