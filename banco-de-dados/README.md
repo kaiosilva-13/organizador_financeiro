@@ -31,29 +31,29 @@ banco-de-dados/
 ## 📅 Cronograma de Desenvolvimento por Etapas
 
 ### 🔹 Etapa 01: Autenticação e Gestão de Acesso
-* **Período:** `24/09/2026 a 09/10/2026`[cite: 8]
-* **Objetivo:** Criar a estrutura inicial de dados para suporte às telas de login, cadastro de usuários e regras de recuperação de acesso.[cite: 3, 8]
+* **Período:** `24/09/2026 a 09/10/2026`
+* **Objetivo:** Criar a estrutura inicial de dados para suporte às telas de login, cadastro de usuários e regras de recuperação de acesso.
 
 ---
 
 ### 🔹 Etapa 02: Gestão de Contas Financeiras e Perfil
-* **Período:** `10/10/2026 a 24/10/2026`[cite: 8]
-* **Objetivo:** Modelar e implementar a tabela de contas lógicas (bancos/carteiras) vinculadas ao usuário e registrar o saldo inicial.[cite: 3, 8, 10]
+* **Período:** `10/10/2026 a 24/10/2026`
+* **Objetivo:** Modelar e implementar a tabela de contas lógicas (bancos/carteiras) vinculadas ao usuário e registrar o saldo inicial.
 
 ---
 
 ### 🔹 Etapa 03: Movimentações Financeiras, Categorias e Gastos Fixos
-* **Período:** `25/10/2026 a 08/11/2026`[cite: 8]
-* **Objetivo:** Estruturar as tabelas de entradas/saídas, categorização e despesas recorrentes com controle de vencimentos mensais.[cite: 3, 8, 10]
+* **Período:** `25/10/2026 a 08/11/2026`
+* **Objetivo:** Estruturar as tabelas de entradas/saídas, categorização e despesas recorrentes com controle de vencimentos mensais.
 
 ---
 
 ### 🔹 Etapa 04: Metas de Poupança e Controle de Compras
-* **Período:** `09/11/2026 a 23/11/2026`[cite: 9]
-* **Objetivo:** Implementar o suporte de dados para acompanhamento de metas de economia e controle de compras parceladas de grande porte.[cite: 4, 9, 10]
+* **Período:** `09/11/2026 a 23/11/2026`
+* **Objetivo:** Implementar o suporte de dados para acompanhamento de metas de economia e controle de compras parceladas de grande porte.
 
 ---
 
 ### 🔹 Etapa 05: Insights Financeiros, Projeções e Deploy
-* **Período:** `24/11/2026 a 09/12/2026`[cite: 9]
-* **Objetivo:** Criar a tabela de orientações educativas, dar suporte ao simulador de gastos futuros sem afetar a base real e preparar o SGBD para produção.[cite: 2, 4, 9, 10]
+* **Período:** `24/11/2026 a 09/12/2026`
+* **Objetivo:** Criar a tabela de orientações educativas, dar suporte ao simulador de gastos futuros sem afetar a base real e preparar o SGBD para produção.
