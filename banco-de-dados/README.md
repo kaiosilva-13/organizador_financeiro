@@ -1,9 +1,8 @@
 # Módulo de Banco de Dados — Organizaê
 
-Este diretório centraliza a documentação conceitual, o modelo de dados em PostgreSQL e os scripts DDL/DML divididos segundo o cronograma oficial do Projeto Integrador (IFRN - Campus Currais Novos)[cite: 1, 8].
+Este diretório centraliza a documentação conceitual, o modelo de dados em PostgreSQL e os scripts DDL/DML divididos segundo o cronograma oficial do Projeto Integrador (IFRN - Campus Currais Novos)
 
 ---
-
 ## 📂 Estrutura e Organização de Pastas
 
 ```text
@@ -27,6 +26,8 @@ banco-de-dados/
     ├── etapa-03/
     ├── etapa-04/
     └── etapa-05/
+```
+---
 
 ## 📅 Cronograma de Desenvolvimento por Etapas
 
@@ -57,3 +58,5 @@ banco-de-dados/
 ### 🔹 Etapa 05: Insights Financeiros, Projeções e Deploy
 * **Período:** `24/11/2026 a 09/12/2026`
 * **Objetivo:** Criar a tabela de orientações educativas, dar suporte ao simulador de gastos futuros sem afetar a base real e preparar o SGBD para produção.
+
+
