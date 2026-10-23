@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   CalendarDays,
@@ -15,11 +15,31 @@ import {
 import DashboardNavbar, {
   type DashboardNavItem,
 } from "../components/dashboard/DashboardNavbar";
+import AccountCard from "../components/dashboard/AccountCard";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
+import CreateAccountModal from "../components/modals/CreateAccountModal";
+import type { Account, NewAccountInput } from "../types/account";
 
 const API_URL = "http://localhost:3000";
+
+/**
+ * Conta de demonstração exibida enquanto o endpoint de contas não está
+ * disponível no back-end.
+ *
+ * Para integrar, substitua este array pela resposta de `GET /accounts`
+ * mantendo o formato de `Account`. O restante do Dashboard já consome o estado
+ * `accounts`, então a troca do mock pela API fica isolada nesta etapa.
+ */
+const INITIAL_ACCOUNTS: Account[] = [
+  {
+    id: "demo-account-nubank",
+    name: "Conta Principal - Nubank",
+    type: "Conta Corrente",
+    balance: 1250,
+  },
+];
 
 const NAV_ITEMS: DashboardNavItem[] = [
   { key: "overview", label: "visão geral" },
@@ -71,6 +91,16 @@ function Dashboard() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
 
+  /**
+   * Estado local de contas.
+   *
+   * `activeAccountIndex` aponta para a conta exibida no card "Dados da conta".
+   * Quando a API de contas existir, `accounts` pode ser carregado via fetch e
+   * `handleCreateAccount` pode fazer um POST antes de atualizar o estado.
+   */
+  const [accounts, setAccounts] = useState<Account[]>(INITIAL_ACCOUNTS);
+  const [activeAccountIndex, setActiveAccountIndex] = useState(0);
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -180,6 +210,40 @@ function Dashboard() {
   const hasTransactions = transactions.length > 0;
   const hasGoals = goals.length > 0;
 
+  const activeAccount = accounts[activeAccountIndex] ?? accounts[0] ?? null;
+
+  const handleOpenCreateAccountModal = useCallback(() => {
+    setIsCreateAccountModalOpen(true);
+  }, []);
+
+  const handleCloseCreateAccountModal = useCallback(() => {
+    setIsCreateAccountModalOpen(false);
+  }, []);
+
+  const handleCreateAccount = useCallback(
+    (input: NewAccountInput) => {
+      const newAccount: Account = {
+        id: crypto.randomUUID(),
+        ...input,
+      };
+
+      setAccounts((currentAccounts) => [...currentAccounts, newAccount]);
+      // Exibe imediatamente a conta recém-cadastrada.
+      setActiveAccountIndex(accounts.length);
+    },
+    [accounts.length],
+  );
+
+  const handleSwitchAccount = useCallback(() => {
+    if (accounts.length < 2) {
+      return;
+    }
+
+    setActiveAccountIndex(
+      (currentIndex) => (currentIndex + 1) % accounts.length,
+    );
+  }, [accounts.length]);
+
   return (
     <div className="min-h-svh bg-slate-50">
       <DashboardNavbar
@@ -203,6 +267,7 @@ function Dashboard() {
 
           <button
             type="button"
+            onClick={handleOpenCreateAccountModal}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#4F26E9] px-5 text-sm font-semibold text-white transition hover:bg-[#411DCB] active:scale-[0.99] sm:w-auto"
           >
             <Plus size={18} />
@@ -210,7 +275,17 @@ function Dashboard() {
           </button>
         </header>
 
-        <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-8">
+          <AccountCard
+            account={activeAccount}
+            position={activeAccountIndex + 1}
+            totalAccounts={accounts.length}
+            onSwitch={handleSwitchAccount}
+            onCreate={handleOpenCreateAccountModal}
+          />
+        </section>
+
+        <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <SummaryCard
             label="Saldo disponível"
             icon={Wallet}
@@ -389,6 +464,12 @@ function Dashboard() {
           </p>
         )}
       </main>
+
+      <CreateAccountModal
+        isOpen={isCreateAccountModalOpen}
+        onClose={handleCloseCreateAccountModal}
+        onCreate={handleCreateAccount}
+      />
     </div>
   );
 }
