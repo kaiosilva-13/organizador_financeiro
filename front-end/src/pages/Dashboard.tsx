@@ -24,23 +24,6 @@ import type { Account, NewAccountInput } from "../types/account";
 
 const API_URL = "http://localhost:3000";
 
-/**
- * Conta de demonstração exibida enquanto o endpoint de contas não está
- * disponível no back-end.
- *
- * Para integrar, substitua este array pela resposta de `GET /accounts`
- * mantendo o formato de `Account`. O restante do Dashboard já consome o estado
- * `accounts`, então a troca do mock pela API fica isolada nesta etapa.
- */
-const INITIAL_ACCOUNTS: Account[] = [
-  {
-    id: "demo-account-nubank",
-    name: "Conta Principal - Nubank",
-    type: "Conta Corrente",
-    balance: 1250,
-  },
-];
-
 const NAV_ITEMS: DashboardNavItem[] = [
   { key: "overview", label: "visão geral" },
   { key: "transactions", label: "movimentações" },
@@ -94,11 +77,11 @@ function Dashboard() {
   /**
    * Estado local de contas.
    *
-   * `activeAccountIndex` aponta para a conta exibida no card "Dados da conta".
-   * Quando a API de contas existir, `accounts` pode ser carregado via fetch e
-   * `handleCreateAccount` pode fazer um POST antes de atualizar o estado.
+   * Inicia vazio: cada usuário deve cadastrar a própria conta. Ao integrar com
+   * o back-end, carregue `accounts` via `GET /accounts` e mantenha
+   * `activeAccountIndex` apontando para a conta exibida.
    */
-  const [accounts, setAccounts] = useState<Account[]>(INITIAL_ACCOUNTS);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccountIndex, setActiveAccountIndex] = useState(0);
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
 
@@ -278,7 +261,7 @@ function Dashboard() {
         <section className="mt-8">
           <AccountCard
             account={activeAccount}
-            position={activeAccountIndex + 1}
+            position={accounts.length > 0 ? activeAccountIndex + 1 : 0}
             totalAccounts={accounts.length}
             onSwitch={handleSwitchAccount}
             onCreate={handleOpenCreateAccountModal}
