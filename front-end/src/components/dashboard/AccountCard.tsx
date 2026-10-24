@@ -113,7 +113,7 @@ function AccountCard({
           )}
         </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-[#4F26E9]">
             <Wallet size={22} />
           </span>
@@ -122,10 +122,15 @@ function AccountCard({
             Nenhuma conta cadastrada
           </p>
 
+          <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-500">
+            Cadastre uma conta e veja suas informações de forma rápida e
+            eficiente.
+          </p>
+
           <button
             type="button"
             onClick={onCreate}
-            className="mt-3 inline-flex h-9 items-center justify-center rounded-lg bg-[#4F26E9] px-4 text-xs font-semibold text-white transition hover:bg-[#411DCB]"
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#4F26E9] px-4 text-xs font-semibold text-white transition hover:bg-[#411DCB]"
           >
             Cadastrar conta
           </button>
