@@ -3,8 +3,10 @@ import {
   Banknote,
   CircleDollarSign,
   CreditCard,
+  FilePenLine,
   Landmark,
   PiggyBank,
+  Trash2,
   TrendingUp,
   UtensilsCrossed,
   Wallet,
@@ -26,20 +28,25 @@ const accountTypeIcons: Record<AccountType, LucideIcon> = {
   "Outras Contas": CircleDollarSign,
 };
 
+const actionButtonClasses =
+  "flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300 disabled:hover:bg-transparent";
+
 type AccountCardProps = {
   account: Account | null;
   position: number;
   totalAccounts: number;
   onSwitch: () => void;
   onCreate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 };
 
 /**
  * Card "Dados da conta".
  *
- * A troca de conta é feita de forma cíclica pelo botão de alternância. Toda a
- * fonte de dados vem do Dashboard, então a futura integração com a API não
- * exige mudanças neste componente.
+ * Exibe a conta ativa e delega ao Dashboard as ações de editar, excluir e
+ * alternar. Toda a fonte de dados vem do Dashboard, então a futura integração
+ * com a API não exige mudanças neste componente.
  */
 function AccountCard({
   account,
@@ -47,6 +54,8 @@ function AccountCard({
   totalAccounts,
   onSwitch,
   onCreate,
+  onEdit,
+  onDelete,
 }: AccountCardProps) {
   const canSwitch = totalAccounts > 1;
   const AccountIcon = account ? accountTypeIcons[account.type] : Wallet;
@@ -58,16 +67,46 @@ function AccountCard({
     <DashboardCard
       title="Dados da conta"
       action={
-        <button
-          type="button"
-          onClick={onSwitch}
-          disabled={!canSwitch}
-          aria-label={switchLabel}
-          title={switchLabel}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-[#4F26E9] transition hover:border-[#4F26E9] hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-[#4F26E9] focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300 disabled:hover:bg-transparent"
-        >
-          <ArrowLeftRight size={17} />
-        </button>
+        <div className="flex items-center gap-1.5">
+          {/* Ações da conta selecionada: editar, excluir e alternar. */}
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={!account}
+            aria-label="Editar conta selecionada"
+            title="Editar conta selecionada"
+            className={`${actionButtonClasses} text-slate-500 hover:border-[#4F26E9] hover:bg-indigo-50 hover:text-[#4F26E9] focus-visible:ring-[#4F26E9]`}
+          >
+            <FilePenLine size={17} />
+          </button>
+
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={!account}
+            aria-label="Excluir conta selecionada"
+            title="Excluir conta selecionada"
+            className={`${actionButtonClasses} text-slate-500 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 focus-visible:ring-rose-500`}
+          >
+            <Trash2 size={17} />
+          </button>
+
+          <span
+            aria-hidden="true"
+            className="mx-0.5 h-6 w-px bg-slate-200"
+          />
+
+          <button
+            type="button"
+            onClick={onSwitch}
+            disabled={!canSwitch}
+            aria-label={switchLabel}
+            title={switchLabel}
+            className={`${actionButtonClasses} text-[#4F26E9] hover:border-[#4F26E9] hover:bg-indigo-50 focus-visible:ring-[#4F26E9]`}
+          >
+            <ArrowLeftRight size={17} />
+          </button>
+        </div>
       }
     >
       {account ? (

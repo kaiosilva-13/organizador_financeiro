@@ -5,36 +5,52 @@ import { X } from "lucide-react";
 
 import AccountTypeSelect from "../accounts/AccountTypeSelect";
 import CurrencyInput from "../accounts/CurrencyInput";
-import type { AccountType, NewAccountInput } from "../../types/account";
+import type {
+  Account,
+  AccountType,
+  NewAccountInput,
+} from "../../types/account";
 
-type CreateAccountModalProps = {
+type AccountModalProps = {
   isOpen: boolean;
+  /**
+   * Conta em edição. Quando ausente, a modal entra no modo de cadastro.
+   * Este mesmo componente atende os dois fluxos para evitar duplicação.
+   */
+  account?: Account | null;
   onClose: () => void;
-  onCreate: (account: NewAccountInput) => void;
+  onSubmit: (account: NewAccountInput) => void;
 };
 
-type CreateAccountModalContentProps = Omit<CreateAccountModalProps, "isOpen">;
+type AccountModalContentProps = Omit<AccountModalProps, "isOpen">;
 
 /**
  * Conteúdo interno da modal.
  *
  * Ele só é montado quando a modal está aberta. Assim, o formulário sempre
- * começa limpo ao reabrir e os efeitos de foco/bloqueio de scroll são
- * automaticamente removidos ao fechar.
+ * começa com os valores corretos ao reabrir e os efeitos de foco/bloqueio de
+ * scroll são automaticamente removidos ao fechar.
  */
-function CreateAccountModalContent({
+function AccountModalContent({
+  account,
   onClose,
-  onCreate,
-}: CreateAccountModalContentProps) {
+  onSubmit,
+}: AccountModalContentProps) {
+  const isEditing = Boolean(account);
+
   const titleId = useId();
+  const descriptionId = useId();
   const nameId = useId();
   const nameErrorId = useId();
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState("");
-  const [type, setType] = useState<AccountType>("Conta Corrente");
-  const [balance, setBalance] = useState(0);
+  // Em modo de edição, os campos já começam preenchidos com a conta ativa.
+  const [name, setName] = useState(account?.name ?? "");
+  const [type, setType] = useState<AccountType>(
+    account?.type ?? "Conta Corrente",
+  );
+  const [balance, setBalance] = useState(account?.balance ?? 0);
   const [nameError, setNameError] = useState("");
 
   useEffect(() => {
@@ -78,7 +94,9 @@ function CreateAccountModalContent({
       return;
     }
 
-    onCreate({
+    // O Dashboard decide se deve criar ou atualizar a conta. Ao integrar com o
+    // back-end, este callback pode disparar POST /accounts ou PUT /accounts/:id.
+    onSubmit({
       name: trimmedName,
       type,
       balance,
@@ -99,6 +117,7 @@ function CreateAccountModalContent({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         className="relative max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-7"
       >
         <div className="flex items-start justify-between gap-4">
@@ -107,11 +126,13 @@ function CreateAccountModalContent({
               id={titleId}
               className="text-xl font-bold tracking-tight text-[#0B0B45]"
             >
-              Cadastrar Nova Conta
+              {isEditing ? "Editar Conta" : "Cadastrar Nova Conta"}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Preencha os dados para adicionar uma nova conta.
+            <p id={descriptionId} className="mt-1 text-sm text-slate-500">
+              {isEditing
+                ? "Atualize as informações da conta selecionada."
+                : "Preencha os dados para adicionar uma nova conta."}
             </p>
           </div>
 
@@ -176,7 +197,7 @@ function CreateAccountModalContent({
           <AccountTypeSelect value={type} onChange={setType} />
 
           <CurrencyInput
-            label="Saldo inicial"
+            label={isEditing ? "Saldo atual" : "Saldo inicial"}
             value={balance}
             onChange={setBalance}
           />
@@ -185,7 +206,7 @@ function CreateAccountModalContent({
             type="submit"
             className="mt-2 inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#4F26E9] px-5 text-sm font-semibold text-white transition hover:bg-[#411DCB] active:scale-[0.99]"
           >
-            Cadastrar
+            {isEditing ? "Salvar alterações" : "Cadastrar"}
           </button>
         </form>
       </div>
@@ -194,16 +215,25 @@ function CreateAccountModalContent({
   );
 }
 
-function CreateAccountModal({
+function AccountModal({
   isOpen,
+  account,
   onClose,
-  onCreate,
-}: CreateAccountModalProps) {
+  onSubmit,
+}: AccountModalProps) {
   if (!isOpen) {
     return null;
   }
 
-  return <CreateAccountModalContent onClose={onClose} onCreate={onCreate} />;
+  return (
+    <AccountModalContent
+      // Garante que o formulário seja reiniciado ao alternar entre contas.
+      key={account?.id ?? "new-account"}
+      account={account}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
+  );
 }
 
-export default CreateAccountModal;
+export default AccountModal;
