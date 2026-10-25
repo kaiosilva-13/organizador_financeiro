@@ -19,7 +19,7 @@ import AccountCard from "../components/dashboard/AccountCard";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
-import CreateAccountModal from "../components/modals/CreateAccountModal";
+import AccountModal from "../components/modals/AccountModal";
 import type { Account, NewAccountInput } from "../types/account";
 
 const API_URL = "http://localhost:3000";
@@ -79,11 +79,13 @@ function Dashboard() {
    *
    * Inicia vazio: cada usuário deve cadastrar a própria conta. Ao integrar com
    * o back-end, carregue `accounts` via `GET /accounts` e mantenha
-   * `activeAccountIndex` apontando para a conta exibida.
+   * `activeAccountIndex` apontando para a conta exibida. `editingAccount`
+   * guarda a conta aberta na modal de edição.
    */
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccountIndex, setActiveAccountIndex] = useState(0);
-  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -196,15 +198,39 @@ function Dashboard() {
   const activeAccount = accounts[activeAccountIndex] ?? accounts[0] ?? null;
 
   const handleOpenCreateAccountModal = useCallback(() => {
-    setIsCreateAccountModalOpen(true);
+    setEditingAccount(null);
+    setIsAccountModalOpen(true);
   }, []);
 
-  const handleCloseCreateAccountModal = useCallback(() => {
-    setIsCreateAccountModalOpen(false);
+  const handleOpenEditAccountModal = useCallback(() => {
+    if (!activeAccount) {
+      return;
+    }
+
+    setEditingAccount(activeAccount);
+    setIsAccountModalOpen(true);
+  }, [activeAccount]);
+
+  const handleCloseAccountModal = useCallback(() => {
+    setIsAccountModalOpen(false);
+    setEditingAccount(null);
   }, []);
 
-  const handleCreateAccount = useCallback(
+  const handleSubmitAccount = useCallback(
     (input: NewAccountInput) => {
+      if (editingAccount) {
+        // Integração futura: substituir pela chamada PUT/PATCH /accounts/:id.
+        setAccounts((currentAccounts) =>
+          currentAccounts.map((account) =>
+            account.id === editingAccount.id
+              ? { ...account, ...input }
+              : account,
+          ),
+        );
+        return;
+      }
+
+      // Integração futura: substituir por POST /accounts e usar o id retornado.
       const newAccount: Account = {
         id: crypto.randomUUID(),
         ...input,
@@ -214,8 +240,35 @@ function Dashboard() {
       // Exibe imediatamente a conta recém-cadastrada.
       setActiveAccountIndex(accounts.length);
     },
-    [accounts.length],
+    [accounts.length, editingAccount],
   );
+
+  const handleDeleteAccount = useCallback(() => {
+    if (!activeAccount) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir a conta "${activeAccount.name}"? Essa ação não pode ser desfeita.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    // Integração futura: chamar DELETE /accounts/:id e atualizar o estado
+    // somente após a resposta de sucesso do back-end.
+    const remainingAccounts = accounts.filter(
+      (account) => account.id !== activeAccount.id,
+    );
+
+    setAccounts(remainingAccounts);
+    setActiveAccountIndex((currentIndex) =>
+      remainingAccounts.length === 0
+        ? 0
+        : Math.min(currentIndex, remainingAccounts.length - 1),
+    );
+  }, [accounts, activeAccount]);
 
   const handleSwitchAccount = useCallback(() => {
     if (accounts.length < 2) {
@@ -265,6 +318,8 @@ function Dashboard() {
             totalAccounts={accounts.length}
             onSwitch={handleSwitchAccount}
             onCreate={handleOpenCreateAccountModal}
+            onEdit={handleOpenEditAccountModal}
+            onDelete={handleDeleteAccount}
           />
         </section>
 
@@ -448,10 +503,11 @@ function Dashboard() {
         )}
       </main>
 
-      <CreateAccountModal
-        isOpen={isCreateAccountModalOpen}
-        onClose={handleCloseCreateAccountModal}
-        onCreate={handleCreateAccount}
+      <AccountModal
+        isOpen={isAccountModalOpen}
+        account={editingAccount}
+        onClose={handleCloseAccountModal}
+        onSubmit={handleSubmitAccount}
       />
     </div>
   );
