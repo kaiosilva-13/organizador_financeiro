@@ -289,31 +289,43 @@ function Dashboard() {
           );
         }
 
+
         const data = await response.json();
+        const savedId = String(data.id ?? editingAccount?.id ?? "");
 
-        const savedAccount: Account = {
-          id: String(data.id),
-          name: data.name,
-          type: data.type,
-          balance: Number(data.balance),
-        };
+        const accountsResponse = await fetch(`${API_URL}/accounts`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        if (isEditing) {
-          setAccounts((currentAccounts) =>
-            currentAccounts.map((account) =>
-              account.id === String(editingAccount.id)
-                ? savedAccount
-                : account
-            )
-          );
-        } else {
-          setAccounts((currentAccounts) => [
-            ...currentAccounts,
-            savedAccount,
-          ]);
-
-          setActiveAccountIndex(accounts.length);
+        if (!accountsResponse.ok) {
+          throw new Error("Conta salva, mas não foi possível atualizar a lista.");
         }
+
+        const accountsData: Account[] = await accountsResponse.json();
+
+        const refreshedAccounts = accountsData.map((account) => ({
+          ...account,
+          id: String(account.id),
+          balance: Number(account.balance),
+        }));
+
+        setAccounts(refreshedAccounts);
+
+        const updatedIndex = refreshedAccounts.findIndex(
+          (account) => account.id === savedId
+        );
+
+        if (updatedIndex >= 0) {
+          setActiveAccountIndex(updatedIndex);
+        } else if (refreshedAccounts.length > 0) {
+          setActiveAccountIndex(0);
+        }
+
+        handleCloseAccountModal();
+
+
 
         handleCloseAccountModal();
       } catch (error) {
@@ -330,63 +342,63 @@ function Dashboard() {
   );
 
 
-  
-const handleDeleteAccount = useCallback(async () => {
-  if (!activeAccount) return;
 
-  const confirmed = window.confirm(
-    `Tem certeza que deseja excluir a conta "${activeAccount.name}"? Essa ação não pode ser desfeita.`
-  );
+  const handleDeleteAccount = useCallback(async () => {
+    if (!activeAccount) return;
 
-  if (!confirmed) return;
-
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    window.location.replace("/login");
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `${API_URL}/accounts/${activeAccount.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir a conta "${activeAccount.name}"? Essa ação não pode ser desfeita.`
     );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
+    if (!confirmed) return;
 
-      throw new Error(
-        errorData?.message || "Não foi possível excluir a conta."
-      );
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      window.location.replace("/login");
+      return;
     }
 
-    const remainingAccounts = accounts.filter(
-      (account) => account.id !== activeAccount.id
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/accounts/${activeAccount.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setAccounts(remainingAccounts);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
 
-    setActiveAccountIndex((currentIndex) =>
-      remainingAccounts.length === 0
-        ? 0
-        : Math.min(currentIndex, remainingAccounts.length - 1)
-    );
-  } catch (error) {
-    console.error("Erro ao excluir conta:", error);
+        throw new Error(
+          errorData?.message || "Não foi possível excluir a conta."
+        );
+      }
 
-    window.alert(
-      error instanceof Error
-        ? error.message
-        : "Ocorreu um erro ao excluir a conta."
-    );
-  }
-}, [accounts, activeAccount]);
+      const remainingAccounts = accounts.filter(
+        (account) => account.id !== activeAccount.id
+      );
+
+      setAccounts(remainingAccounts);
+
+      setActiveAccountIndex((currentIndex) =>
+        remainingAccounts.length === 0
+          ? 0
+          : Math.min(currentIndex, remainingAccounts.length - 1)
+      );
+    } catch (error) {
+      console.error("Erro ao excluir conta:", error);
+
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro ao excluir a conta."
+      );
+    }
+  }, [accounts, activeAccount]);
 
   const handleSwitchAccount = useCallback(() => {
     if (accounts.length < 2) {
