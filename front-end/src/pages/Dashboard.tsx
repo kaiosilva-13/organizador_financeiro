@@ -130,6 +130,45 @@ function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAccounts() {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        window.location.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/accounts`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar as contas.");
+        }
+
+        const data: Account[] = await response.json();
+
+        if (isMounted) {
+          setAccounts(data);
+          setActiveAccountIndex(0);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar contas:", error);
+      }
+    }
+
+    loadAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -216,59 +255,138 @@ function Dashboard() {
     setEditingAccount(null);
   }, []);
 
+
   const handleSubmitAccount = useCallback(
-    (input: NewAccountInput) => {
-      if (editingAccount) {
-        // Integração futura: substituir pela chamada PUT/PATCH /accounts/:id.
-        setAccounts((currentAccounts) =>
-          currentAccounts.map((account) =>
-            account.id === editingAccount.id
-              ? { ...account, ...input }
-              : account,
-          ),
-        );
+    async (input: NewAccountInput) => {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        window.location.replace("/login");
         return;
       }
 
-      // Integração futura: substituir por POST /accounts e usar o id retornado.
-      const newAccount: Account = {
-        id: crypto.randomUUID(),
-        ...input,
-      };
+      const isEditing = editingAccount !== null;
 
-      setAccounts((currentAccounts) => [...currentAccounts, newAccount]);
-      // Exibe imediatamente a conta recém-cadastrada.
-      setActiveAccountIndex(accounts.length);
+      const url = isEditing
+        ? `${API_URL}/accounts/${editingAccount.id}`
+        : `${API_URL}/accounts`;
+
+      try {
+        const response = await fetch(url, {
+          method: isEditing ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(input),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+
+          throw new Error(
+            errorData?.message || "Não foi possível salvar a conta."
+          );
+        }
+
+        const data = await response.json();
+
+        const savedAccount: Account = {
+          id: String(data.id),
+          name: data.name,
+          type: data.type,
+          balance: Number(data.balance),
+        };
+
+        if (isEditing) {
+          setAccounts((currentAccounts) =>
+            currentAccounts.map((account) =>
+              account.id === String(editingAccount.id)
+                ? savedAccount
+                : account
+            )
+          );
+        } else {
+          setAccounts((currentAccounts) => [
+            ...currentAccounts,
+            savedAccount,
+          ]);
+
+          setActiveAccountIndex(accounts.length);
+        }
+
+        handleCloseAccountModal();
+      } catch (error) {
+        console.error("Erro ao salvar conta:", error);
+
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao salvar a conta."
+        );
+      }
     },
-    [accounts.length, editingAccount],
+    [accounts.length, editingAccount, handleCloseAccountModal],
   );
 
-  const handleDeleteAccount = useCallback(() => {
-    if (!activeAccount) {
-      return;
-    }
 
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir a conta "${activeAccount.name}"? Essa ação não pode ser desfeita.`,
+  
+const handleDeleteAccount = useCallback(async () => {
+  if (!activeAccount) return;
+
+  const confirmed = window.confirm(
+    `Tem certeza que deseja excluir a conta "${activeAccount.name}"? Essa ação não pode ser desfeita.`
+  );
+
+  if (!confirmed) return;
+
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    window.location.replace("/login");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_URL}/accounts/${activeAccount.id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
-    if (!confirmed) {
-      return;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      throw new Error(
+        errorData?.message || "Não foi possível excluir a conta."
+      );
     }
 
-    // Integração futura: chamar DELETE /accounts/:id e atualizar o estado
-    // somente após a resposta de sucesso do back-end.
     const remainingAccounts = accounts.filter(
-      (account) => account.id !== activeAccount.id,
+      (account) => account.id !== activeAccount.id
     );
 
     setAccounts(remainingAccounts);
+
     setActiveAccountIndex((currentIndex) =>
       remainingAccounts.length === 0
         ? 0
-        : Math.min(currentIndex, remainingAccounts.length - 1),
+        : Math.min(currentIndex, remainingAccounts.length - 1)
     );
-  }, [accounts, activeAccount]);
+  } catch (error) {
+    console.error("Erro ao excluir conta:", error);
+
+    window.alert(
+      error instanceof Error
+        ? error.message
+        : "Ocorreu um erro ao excluir a conta."
+    );
+  }
+}, [accounts, activeAccount]);
 
   const handleSwitchAccount = useCallback(() => {
     if (accounts.length < 2) {
