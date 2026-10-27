@@ -5,7 +5,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // 1. Importado o useLocation
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import AuthLayout from "../components/auth/AuthLayout";
@@ -21,6 +21,9 @@ function VerifyCode() {
   const [code, setCode] = useState<string[]>(createEmptyCode);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
   const navigate = useNavigate();
+  const location = useLocation(); 
+
+  const email = location.state?.email || "";
 
   const isComplete = code.every((digit) => digit !== "");
 
@@ -116,21 +119,56 @@ function VerifyCode() {
 
     focusInput(Math.min(digits.length, CODE_LENGTH - 1));
   }
-
-  function handleResend() {
+ async function handleResend() {
     setCode(createEmptyCode());
     focusInput(0);
-  }
 
-  function handleSubmit() {
+    try {
+      const response = await fetch("http://localhost:3000/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Não foi possível reenviar o código.");
+      }
+
+      alert("Novo código enviado para o seu e-mail!");
+    } catch (error) {
+      console.error("Erro ao reenviar código:", error);
+      alert("Erro ao tentar reenviar o código.");
+    }
+  }
+ async function handleSubmit() {
     if (!isComplete) {
       focusInput(code.findIndex((digit) => digit === ""));
       return;
     }
 
-    navigate("/login");
-  }
+    const fullCode = code.join("");
 
+    try {
+      const response = await fetch("http://localhost:3000/auth/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, code: fullCode }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Código inválido ou expirado.");
+      }
+      navigate("/nova-senha", { state: { email, code: fullCode } });
+
+    } catch (error: any) {
+      console.error("Erro na validação do código:", error);
+      alert(error.message || "Erro ao validar o código.");
+    }
+ }
   return (
     <AuthLayout
       banner={{
