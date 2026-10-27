@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import VerifyCode from "./pages/VerifyCode";
 import Dashboard from "./pages/Dashboard";
+import ResetPassword from "./pages/ResetPassword"; 
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/esqueci-senha" element={<ForgotPassword />} />
         <Route path="/verificar-codigo" element={<VerifyCode />} />
+        <Route path="/nova-senha" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );
