@@ -51,6 +51,19 @@ export class AuthController {
       )}`,
     );
   }
+  @Post('reset-password')
+  async resetPassword(@Body() body: { email: string; code: string; novaSenha: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.novaSenha);
+  }
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('verify-code')
+  async verifyCode(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyCode(body.email, body.code);
+  }
 
 
   @Get('me')
