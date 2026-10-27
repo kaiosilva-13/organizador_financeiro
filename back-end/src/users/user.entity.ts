@@ -19,6 +19,21 @@ export class Usuario {
   @Column({ name: 'senha_hash', length: 255 })
   senhaHash: string;
 
+  @Column({
+    name: 'reset_token',
+    type: 'varchar',
+    length: 5,
+    nullable: true,
+  })
+  resetToken: string | null;
+
+  @Column({
+    name: 'reset_token_expires',
+    type: 'timestamp',
+    nullable: true,
+  })
+  resetTokenExpires: Date | null;
+
   @CreateDateColumn({
     name: 'criado_em',
     type: 'timestamp',
