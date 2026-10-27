@@ -1,7 +1,6 @@
 import * as nodemailer from 'nodemailer';
 import { Injectable } from '@nestjs/common';
 
-
 @Injectable()
 export class MailService {
   private transporter
@@ -17,9 +16,9 @@ export class MailService {
       tls: {
         rejectUnauthorized: false, 
       },
-      connectionTimeout: 60000, 
-      greetingTimeout: 60000,
-      socketTimeout: 60000,
+      connectionTimeout: 5000, 
+      greetingTimeout: 5000,
+      socketTimeout: 5000,
     });
   }
 
