@@ -167,6 +167,9 @@ function TransactionModalContent({
     });
   }
 
+  // TODO [BACKEND]: Repetir esta validação no servidor. O upload do
+  // comprovante deve usar URL pré-assinada do S3, com limite de 10 MB,
+  // allowlist de MIME types e varredura de segurança no bucket.
   function validateReceipt(file: File): string | null {
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
     const hasAcceptedType = ACCEPTED_RECEIPT_TYPES.includes(file.type);
@@ -639,6 +642,7 @@ function TransactionModalContent({
                         id={newCategoryColorId}
                         type="color"
                         value={newCategoryColor}
+                        aria-label="Escolher uma cor personalizada"
                         onChange={(event) =>
                           setNewCategoryColor(event.target.value)
                         }

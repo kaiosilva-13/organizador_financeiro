@@ -29,6 +29,24 @@ import type {
   TransactionReceipt,
 } from "../types/transaction";
 
+/**
+ * Página de Movimentações.
+ *
+ * O front-end mantém os lançamentos em memória enquanto o módulo de
+ * movimentações não existe no back-end. Os pontos de integração previstos são:
+ *
+ * - `GET /transactions?accountId=&search=&startDate=&endDate=&minAmount=&
+ *    maxAmount=&categoryId=&page=&limit=`
+ * - `POST /transactions` e `PUT /transactions/:id`
+ * - `DELETE /transactions/:id`
+ * - `GET /categories` e `POST /categories`
+ * - upload de comprovantes via URL pré-assinada do S3
+ *
+ * TODO [BACKEND]: Substituir os dados de demonstração, a paginação local e as
+ * mutações em memória pelas chamadas acima. O componente já separa os dados
+ * por `accountId`, então a troca de conta deve refletir a query da API.
+ */
+
 const PAGE_SIZE = 6;
 
 function Transactions() {
@@ -41,6 +59,7 @@ function Transactions() {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // TODO [BACKEND]: Substituir as categorias padrão por GET /categories.
   const [categories, setCategories] =
     useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
   const [filters, setFilters] = useState<TransactionFilterValues>({
@@ -104,6 +123,8 @@ function Transactions() {
         setAccounts(normalizedAccounts);
         setAccountsError("");
 
+        // TODO [BACKEND]: Remover o seed de demonstração e carregar os
+        // lançamentos reais com GET /transactions?accountId=<id>.
         if (normalizedAccounts.length > 0 && !hasSeededDemoRef.current) {
           hasSeededDemoRef.current = true;
           setTransactions(buildDemoTransactions(normalizedAccounts[0].id));
@@ -158,6 +179,9 @@ function Transactions() {
     [filters],
   );
 
+  // TODO [BACKEND]: Implementar estes filtros como query params no banco de
+  // dados (título, período, faixa de valor e categoria). A filtragem local
+  // abaixo é apenas o fallback funcional do protótipo.
   const filteredTransactions = useMemo(() => {
     const normalizedSearch = filters.search
       .trim()
@@ -208,6 +232,8 @@ function Transactions() {
     });
   }, [accountTransactions, filters]);
 
+  // TODO [BACKEND]: Migrar para paginação server-side (`page`/`limit`) para
+  // não transferir todo o histórico do usuário em cada consulta.
   const totalPages = Math.max(
     1,
     Math.ceil(filteredTransactions.length / PAGE_SIZE),
@@ -281,6 +307,8 @@ function Transactions() {
         null;
 
       if (input.newCategory) {
+        // TODO [BACKEND]: Persistir a nova categoria com POST /categories e
+        // usar o `id` retornado pela API antes de salvar a movimentação.
         const newCategoryName = input.newCategory.name.trim();
         const existingCategory = categories.find(
           (category) =>
@@ -313,6 +341,9 @@ function Transactions() {
         editingTransaction?.receipt ?? null;
 
       if (input.receiptFile) {
+        // TODO [BACKEND]: Conectar endpoint de upload de comprovantes S3.
+        // O fluxo ideal é solicitar uma URL pré-assinada, enviar o arquivo
+        // diretamente ao bucket e persistir apenas a chave/URL no banco.
         const receiptUrl = URL.createObjectURL(input.receiptFile);
         createdReceiptUrlsRef.current.add(receiptUrl);
 
@@ -326,6 +357,8 @@ function Transactions() {
         receipt = null;
       }
 
+      // TODO [BACKEND]: Trocar as mutações locais abaixo por chamadas reais:
+      // PUT /transactions/:id para edição e POST /transactions para criação.
       if (editingTransaction) {
         if (editingTransaction.receipt?.url !== receipt?.url) {
           releaseReceiptUrl(editingTransaction.receipt?.url);
@@ -385,6 +418,8 @@ function Transactions() {
 
       releaseReceiptUrl(transaction.receipt?.url);
 
+      // TODO [BACKEND]: Substituir a remoção local por DELETE
+      // /transactions/:id e tratar o comprovante no S3.
       setTransactions((currentTransactions) =>
         currentTransactions.filter((item) => item.id !== transaction.id),
       );

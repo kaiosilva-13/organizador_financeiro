@@ -59,6 +59,9 @@ export const DEMO_RECEIPT: TransactionReceipt = {
  * Registros de demonstração usados enquanto o endpoint de movimentações não
  * existe. São vinculados à primeira conta carregada e podem ser removidos
  * normalmente pelo usuário.
+ *
+ * TODO [BACKEND]: Remover esta função quando `GET /transactions` estiver
+ * disponível. Ela existe apenas para validar a interface e os estados vazios.
  */
 export function buildDemoTransactions(accountId: string): Transaction[] {
   return [

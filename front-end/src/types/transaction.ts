@@ -4,6 +4,11 @@
  * Os nomes abaixo seguem o contrato que o front-end espera receber da API.
  * No back-end, `categoryId` deve referenciar a tabela de categorias e
  * `accountId` a conta financeira selecionada pelo usuário.
+ *
+ * TODO [BACKEND]: Padronizar a resposta das movimentações no formato abaixo.
+ * `receipt.url` deve ser uma URL assinada do S3 (ou uma rota autenticada de
+ * download), nunca o binário do arquivo. `date` deve trafegar como
+ * `YYYY-MM-DD` para evitar deslocamento de fuso horário nos filtros.
  */
 
 export type TransactionType = "income" | "expense";

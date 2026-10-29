@@ -37,7 +37,7 @@ function TransactionsAccountBar({
             >
               {accounts.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} — {item.type}
+                  {item.name}
                 </option>
               ))}
             </select>

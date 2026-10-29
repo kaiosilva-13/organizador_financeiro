@@ -185,7 +185,9 @@ function TransactionsTable({
   const countLabel =
     totalPages <= 1
       ? `Exibindo ${totalItems} de ${totalItems} ${noun}`
-      : `Exibindo ${startItem}–${endItem} de ${totalItems} ${noun}`;
+      : startItem === endItem
+        ? `Exibindo ${startItem} de ${totalItems} ${noun}`
+        : `Exibindo ${startItem}–${endItem} de ${totalItems} ${noun}`;
 
   const getCategory = (transaction: Transaction) =>
     categoriesById.get(transaction.categoryId) ?? {
@@ -245,6 +247,10 @@ function TransactionsTable({
         <>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[980px] border-collapse text-left">
+              <caption className="sr-only">
+                Lista de movimentações da conta selecionada
+              </caption>
+
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70">
                   <th

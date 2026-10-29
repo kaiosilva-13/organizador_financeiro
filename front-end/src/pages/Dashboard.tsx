@@ -285,7 +285,7 @@ function Dashboard() {
         );
       }
     },
-    [accounts.length, editingAccount, handleCloseAccountModal],
+    [editingAccount, handleCloseAccountModal],
   );
 
 
