@@ -4,6 +4,7 @@ import { AlertCircle, Plus, Wallet } from "lucide-react";
 
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AccountModal from "../components/modals/AccountModal";
+import TransactionModal from "../components/transactions/TransactionModal";
 import TransactionsAccountBar from "../components/transactions/TransactionsAccountBar";
 import TransactionsEmptyState from "../components/transactions/TransactionsEmptyState";
 import TransactionsTable from "../components/transactions/TransactionsTable";
@@ -13,12 +14,15 @@ import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import {
   DEFAULT_CATEGORIES,
   buildDemoTransactions,
+  createId,
   sortTransactionsByDate,
 } from "../lib/transactions";
 import type { Account, NewAccountInput } from "../types/account";
 import type {
   Transaction,
   TransactionCategory,
+  TransactionFormInput,
+  TransactionReceipt,
 } from "../types/transaction";
 
 const PAGE_SIZE = 6;
@@ -33,10 +37,23 @@ function Transactions() {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories] = useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] =
+    useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
   const [page, setPage] = useState(1);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   const hasSeededDemoRef = useRef(false);
+  const createdReceiptUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const createdReceiptUrls = createdReceiptUrlsRef.current;
+
+    return () => {
+      createdReceiptUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -151,23 +168,151 @@ function Transactions() {
     [totalPages],
   );
 
-  const handleDeleteTransaction = useCallback((transaction: Transaction) => {
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir a movimentação "${transaction.title}"? Essa ação não pode ser desfeita.`,
-    );
-
-    if (!confirmed) {
+  const releaseReceiptUrl = useCallback((url?: string) => {
+    if (!url?.startsWith("blob:")) {
       return;
     }
 
-    if (transaction.receipt?.url.startsWith("blob:")) {
-      URL.revokeObjectURL(transaction.receipt.url);
-    }
-
-    setTransactions((currentTransactions) =>
-      currentTransactions.filter((item) => item.id !== transaction.id),
-    );
+    URL.revokeObjectURL(url);
+    createdReceiptUrlsRef.current.delete(url);
   }, []);
+
+  const handleOpenNewTransaction = useCallback(() => {
+    setEditingTransaction(null);
+    setIsTransactionModalOpen(true);
+  }, []);
+
+  const handleOpenEditTransaction = useCallback((transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsTransactionModalOpen(true);
+  }, []);
+
+  const handleCloseTransactionModal = useCallback(() => {
+    setIsTransactionModalOpen(false);
+    setEditingTransaction(null);
+  }, []);
+
+  const handleSubmitTransaction = useCallback(
+    async (input: TransactionFormInput) => {
+      if (!activeAccount) {
+        throw new Error("Selecione uma conta financeira para continuar.");
+      }
+
+      let resolvedCategory =
+        categories.find((category) => category.id === input.categoryId) ??
+        null;
+
+      if (input.newCategory) {
+        const newCategoryName = input.newCategory.name.trim();
+        const existingCategory = categories.find(
+          (category) =>
+            category.name.toLocaleLowerCase("pt-BR") ===
+            newCategoryName.toLocaleLowerCase("pt-BR"),
+        );
+
+        if (existingCategory) {
+          resolvedCategory = existingCategory;
+        } else {
+          const newCategory: TransactionCategory = {
+            id: createId("category"),
+            name: newCategoryName,
+            color: input.newCategory.color,
+          };
+
+          resolvedCategory = newCategory;
+          setCategories((currentCategories) => [
+            ...currentCategories,
+            newCategory,
+          ]);
+        }
+      }
+
+      if (!resolvedCategory) {
+        throw new Error("Selecione uma categoria para a movimentação.");
+      }
+
+      let receipt: TransactionReceipt | null =
+        editingTransaction?.receipt ?? null;
+
+      if (input.receiptFile) {
+        const receiptUrl = URL.createObjectURL(input.receiptFile);
+        createdReceiptUrlsRef.current.add(receiptUrl);
+
+        receipt = {
+          name: input.receiptFile.name,
+          url: receiptUrl,
+          mimeType: input.receiptFile.type || undefined,
+          size: input.receiptFile.size,
+        };
+      } else if (input.removeReceipt) {
+        receipt = null;
+      }
+
+      if (editingTransaction) {
+        if (editingTransaction.receipt?.url !== receipt?.url) {
+          releaseReceiptUrl(editingTransaction.receipt?.url);
+        }
+
+        setTransactions((currentTransactions) =>
+          currentTransactions.map((item) =>
+            item.id === editingTransaction.id
+              ? {
+                  ...item,
+                  title: input.title,
+                  description: input.description,
+                  amount: input.amount,
+                  type: input.type,
+                  categoryId: resolvedCategory.id,
+                  date: input.date,
+                  receipt,
+                }
+              : item,
+          ),
+        );
+      } else {
+        const newTransaction: Transaction = {
+          id: createId("transaction"),
+          accountId: activeAccount.id,
+          title: input.title,
+          description: input.description,
+          amount: input.amount,
+          type: input.type,
+          categoryId: resolvedCategory.id,
+          date: input.date,
+          receipt,
+        };
+
+        setTransactions((currentTransactions) => [
+          newTransaction,
+          ...currentTransactions,
+        ]);
+        setPage(1);
+      }
+
+      setEditingTransaction(null);
+      setIsTransactionModalOpen(false);
+    },
+    [activeAccount, categories, editingTransaction, releaseReceiptUrl],
+  );
+
+  const handleDeleteTransaction = useCallback(
+    (transaction: Transaction) => {
+      const confirmed = window.confirm(
+        `Tem certeza que deseja excluir a movimentação "${transaction.title}"? Essa ação não pode ser desfeita.`,
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      releaseReceiptUrl(transaction.receipt?.url);
+
+      setTransactions((currentTransactions) =>
+        currentTransactions.filter((item) => item.id !== transaction.id),
+      );
+    },
+    [releaseReceiptUrl],
+  );
 
   const handleCreateAccount = useCallback(
     async (input: NewAccountInput) => {
@@ -241,6 +386,17 @@ function Transactions() {
               suas finanças sob controle.
             </p>
           </div>
+
+          {!isLoadingAccounts && activeAccount && (
+            <button
+              type="button"
+              onClick={handleOpenNewTransaction}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#4F26E9] px-5 text-sm font-semibold text-white transition hover:bg-[#411DCB] active:scale-[0.99]"
+            >
+              <Plus size={18} aria-hidden="true" />
+              Nova Movimentação
+            </button>
+          )}
         </header>
 
         {isLoadingAccounts && (
@@ -314,8 +470,10 @@ function Transactions() {
                 hasAnyTransactions={accountTransactions.length > 0}
                 hasActiveFilters={false}
                 onPageChange={handlePageChange}
+                onEdit={handleOpenEditTransaction}
                 onDelete={handleDeleteTransaction}
                 onClearFilters={() => undefined}
+                onCreate={handleOpenNewTransaction}
               />
             </div>
           </>
@@ -327,6 +485,14 @@ function Transactions() {
         account={null}
         onClose={() => setIsAccountModalOpen(false)}
         onSubmit={handleCreateAccount}
+      />
+
+      <TransactionModal
+        isOpen={isTransactionModalOpen}
+        transaction={editingTransaction}
+        categories={categories}
+        onClose={handleCloseTransactionModal}
+        onSubmit={handleSubmitTransaction}
       />
     </div>
   );
