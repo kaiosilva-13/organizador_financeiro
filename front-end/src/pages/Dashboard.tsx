@@ -12,26 +12,16 @@ import {
   Wallet,
 } from "lucide-react";
 
-import DashboardNavbar, {
-  type DashboardNavItem,
-} from "../components/dashboard/DashboardNavbar";
+import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AccountCard from "../components/dashboard/AccountCard";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
 import AccountModal from "../components/modals/AccountModal";
+import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
+import { API_URL } from "../lib/api";
+import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import type { Account, NewAccountInput } from "../types/account";
-
-const API_URL = "http://localhost:3000";
-
-const NAV_ITEMS: DashboardNavItem[] = [
-  { key: "overview", label: "visão geral" },
-  { key: "transactions", label: "movimentações" },
-  { key: "fixed-expenses", label: "gastos fixos" },
-  { key: "goals", label: "metas financeiras" },
-  { key: "purchases", label: "controle de compras" },
-  { key: "simulation", label: "simulação gastos futuros" },
-];
 
 export type TransactionType = "income" | "expense";
 
@@ -65,8 +55,8 @@ export type Goal = {
 };
 
 function Dashboard() {
+  const userName = useAuthenticatedUser();
   const [activeNav, setActiveNav] = useState("overview");
-  const [userName, setUserName] = useState("Usuário");
   const [isLoading, setIsLoading] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -86,49 +76,6 @@ function Dashboard() {
   const [activeAccountIndex, setActiveAccountIndex] = useState(0);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadAuthenticatedUser() {
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        window.location.replace("/login");
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          localStorage.removeItem("access_token");
-          window.location.replace("/login");
-          return;
-        }
-
-        const user = await response.json();
-
-        if (isMounted) {
-          setUserName(user.name || user.nome || "Usuário");
-        }
-      } catch {
-        if (isMounted) {
-          setUserName("Usuário");
-        }
-      }
-    }
-
-    loadAuthenticatedUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -413,7 +360,7 @@ function Dashboard() {
   return (
     <div className="min-h-svh bg-slate-50">
       <DashboardNavbar
-        items={NAV_ITEMS}
+        items={DASHBOARD_NAV_ITEMS}
         activeKey={activeNav}
         userName={userName}
         onNavigate={setActiveNav}
