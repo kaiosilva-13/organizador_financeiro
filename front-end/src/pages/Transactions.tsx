@@ -13,7 +13,10 @@ import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
 import { API_URL } from "../lib/api";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import {
-  DEFAULT_CATEGORIES,
+  loadStoredCategories,
+  saveStoredCustomCategories,
+} from "../lib/categoryStorage";
+import {
   EMPTY_TRANSACTION_FILTERS,
   createId,
   normalizeSearchText,
@@ -65,9 +68,11 @@ function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>(
     loadStoredTransactions,
   );
-  // TODO [BACKEND]: Substituir as categorias padrão por GET /categories.
-  const [categories, setCategories] =
-    useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
+  // As categorias padrão são combinadas com as personalizadas salvas localmente.
+  // TODO [BACKEND]: Substituir por GET /categories quando o endpoint existir.
+  const [categories, setCategories] = useState<TransactionCategory[]>(
+    loadStoredCategories,
+  );
   const [filters, setFilters] = useState<TransactionFilterValues>({
     ...EMPTY_TRANSACTION_FILTERS,
   });
@@ -79,6 +84,10 @@ function Transactions() {
   useEffect(() => {
     saveStoredTransactions(transactions);
   }, [transactions]);
+
+  useEffect(() => {
+    saveStoredCustomCategories(categories);
+  }, [categories]);
 
   useEffect(() => {
     let isMounted = true;
