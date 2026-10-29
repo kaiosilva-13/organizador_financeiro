@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import { Bell, Menu, Settings, X } from "lucide-react";
 
 import logoImg from "../../assets/logo_projeto.png";
@@ -7,6 +9,8 @@ import logoImg from "../../assets/logo_projeto.png";
 export type DashboardNavItem = {
   key: string;
   label: string;
+  /** Rota de destino. Itens sem rota permanecem como atalhos locais. */
+  path?: string;
 };
 
 type DashboardNavbarProps = {
@@ -22,8 +26,17 @@ function DashboardNavbar({
   userName = "Kaio",
   onNavigate,
 }: DashboardNavbarProps) {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const initial = userName.charAt(0).toUpperCase();
+
+  function handleNavigate(item: DashboardNavItem) {
+    if (item.path) {
+      navigate(item.path);
+    }
+
+    onNavigate?.(item.key);
+  }
 
   return (
     <header className="sticky top-0 z-30 bg-[#0B085C] text-white">
@@ -47,7 +60,7 @@ function DashboardNavbar({
               <button
                 key={item.key}
                 type="button"
-                onClick={() => onNavigate?.(item.key)}
+                onClick={() => handleNavigate(item)}
                 className={`relative rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition ${
                   isActive
                     ? "text-white"
@@ -114,7 +127,7 @@ function DashboardNavbar({
                   key={item.key}
                   type="button"
                   onClick={() => {
-                    onNavigate?.(item.key);
+                    handleNavigate(item);
                     setIsMenuOpen(false);
                   }}
                   className={`rounded-md px-3 py-2.5 text-left text-sm font-medium transition ${

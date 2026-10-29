@@ -12,26 +12,26 @@ import {
   Wallet,
 } from "lucide-react";
 
-import DashboardNavbar, {
-  type DashboardNavItem,
-} from "../components/dashboard/DashboardNavbar";
+import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AccountCard from "../components/dashboard/AccountCard";
 import DashboardCard from "../components/dashboard/DashboardCard";
 import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
 import AccountModal from "../components/modals/AccountModal";
+import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
+import { API_URL } from "../lib/api";
+import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
+import {
+  applyTransactionBalances,
+  getAccountBalanceDelta,
+  roundCurrency,
+} from "../lib/transactions";
+import {
+  loadStoredTransactions,
+  saveStoredTransactions,
+} from "../lib/transactionStorage";
 import type { Account, NewAccountInput } from "../types/account";
-
-const API_URL = "http://localhost:3000";
-
-const NAV_ITEMS: DashboardNavItem[] = [
-  { key: "overview", label: "visão geral" },
-  { key: "transactions", label: "movimentações" },
-  { key: "fixed-expenses", label: "gastos fixos" },
-  { key: "goals", label: "metas financeiras" },
-  { key: "purchases", label: "controle de compras" },
-  { key: "simulation", label: "simulação gastos futuros" },
-];
+import type { Transaction as StoredTransaction } from "../types/transaction";
 
 export type TransactionType = "income" | "expense";
 
@@ -65,8 +65,8 @@ export type Goal = {
 };
 
 function Dashboard() {
+  const userName = useAuthenticatedUser();
   const [activeNav, setActiveNav] = useState("overview");
-  const [userName, setUserName] = useState("Usuário");
   const [isLoading, setIsLoading] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -87,48 +87,11 @@ function Dashboard() {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadAuthenticatedUser() {
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        window.location.replace("/login");
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          localStorage.removeItem("access_token");
-          window.location.replace("/login");
-          return;
-        }
-
-        const user = await response.json();
-
-        if (isMounted) {
-          setUserName(user.name || user.nome || "Usuário");
-        }
-      } catch {
-        if (isMounted) {
-          setUserName("Usuário");
-        }
-      }
-    }
-
-    loadAuthenticatedUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Movimentações locais usadas para simular o saldo atualizado das contas.
+  // TODO [BACKEND]: Remover quando o saldo já vier calculado de GET /accounts.
+  const [localTransactions, setLocalTransactions] = useState<StoredTransaction[]>(
+    loadStoredTransactions,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -153,9 +116,14 @@ function Dashboard() {
         }
 
         const data: Account[] = await response.json();
+        const normalizedAccounts = data.map((account) => ({
+          ...account,
+          id: String(account.id),
+          balance: Number(account.balance),
+        }));
 
         if (isMounted) {
-          setAccounts(data);
+          setAccounts(normalizedAccounts);
           setActiveAccountIndex(0);
         }
       } catch (error) {
@@ -234,7 +202,18 @@ function Dashboard() {
   const hasTransactions = transactions.length > 0;
   const hasGoals = goals.length > 0;
 
-  const activeAccount = accounts[activeAccountIndex] ?? accounts[0] ?? null;
+  // Simula o saldo já atualizado pelas movimentações locais.
+  // TODO [BACKEND]: Substituir pelo saldo calculado no servidor.
+  const accountsWithBalances = useMemo(
+    () => applyTransactionBalances(accounts, localTransactions),
+    [accounts, localTransactions],
+  );
+
+  const activeAccount =
+    accountsWithBalances[activeAccountIndex] ?? accountsWithBalances[0] ?? null;
+
+  const availableBalance =
+    transactions.length > 0 ? balance : (activeAccount?.balance ?? null);
 
   const handleOpenCreateAccountModal = useCallback(() => {
     setEditingAccount(null);
@@ -271,6 +250,17 @@ function Dashboard() {
         ? `${API_URL}/accounts/${editingAccount.id}`
         : `${API_URL}/accounts`;
 
+      // A modal exibe o saldo já ajustado pelas movimentações locais. Removemos
+      // esse ajuste antes de enviar o saldo base para a API.
+      // TODO [BACKEND]: Com o saldo calculado no servidor, enviar direto.
+      const localBalanceDelta = editingAccount
+        ? getAccountBalanceDelta(localTransactions, editingAccount.id)
+        : 0;
+      const accountPayload = {
+        ...input,
+        balance: roundCurrency(input.balance - localBalanceDelta),
+      };
+
       try {
         const response = await fetch(url, {
           method: isEditing ? "PUT" : "POST",
@@ -278,7 +268,7 @@ function Dashboard() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(input),
+          body: JSON.stringify(accountPayload),
         });
 
         if (!response.ok) {
@@ -324,10 +314,6 @@ function Dashboard() {
         }
 
         handleCloseAccountModal();
-
-
-
-        handleCloseAccountModal();
       } catch (error) {
         console.error("Erro ao salvar conta:", error);
 
@@ -338,7 +324,7 @@ function Dashboard() {
         );
       }
     },
-    [accounts.length, editingAccount, handleCloseAccountModal],
+    [editingAccount, handleCloseAccountModal, localTransactions],
   );
 
 
@@ -384,6 +370,14 @@ function Dashboard() {
 
       setAccounts(remainingAccounts);
 
+      // TODO [BACKEND]: O servidor também deve remover (ou arquivar) as
+      // movimentações vinculadas à conta excluída.
+      const remainingLocalTransactions = localTransactions.filter(
+        (transaction) => transaction.accountId !== activeAccount.id,
+      );
+      setLocalTransactions(remainingLocalTransactions);
+      saveStoredTransactions(remainingLocalTransactions);
+
       setActiveAccountIndex((currentIndex) =>
         remainingAccounts.length === 0
           ? 0
@@ -398,7 +392,7 @@ function Dashboard() {
           : "Ocorreu um erro ao excluir a conta."
       );
     }
-  }, [accounts, activeAccount]);
+  }, [accounts, activeAccount, localTransactions]);
 
   const handleSwitchAccount = useCallback(() => {
     if (accounts.length < 2) {
@@ -413,7 +407,7 @@ function Dashboard() {
   return (
     <div className="min-h-svh bg-slate-50">
       <DashboardNavbar
-        items={NAV_ITEMS}
+        items={DASHBOARD_NAV_ITEMS}
         activeKey={activeNav}
         userName={userName}
         onNavigate={setActiveNav}
@@ -458,7 +452,7 @@ function Dashboard() {
             label="Saldo disponível"
             icon={Wallet}
             tone="brand"
-            value={balance}
+            value={availableBalance}
             hint="Suas informações aparecerão aqui após o primeiro lançamento."
           />
 
