@@ -158,7 +158,20 @@ export function formatTransactionDate(date: string): string {
 }
 
 /**
- * Interpreta o valor digitado nos filtros aceitando vírgula ou ponto decimal.
+ * Normaliza texto para busca: remove acentos, ignora caixa e espaços nas
+ * extremidades. Assim "salario" encontra "Salário".
+ */
+export function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
+}
+
+/**
+ * Interpreta o valor digitado nos filtros aceitando vírgula ou ponto decimal,
+ * além de separador de milhar (ex.: "1.000,00" ou "1.000").
  * Retorna `null` quando o campo está vazio para não restringir a busca.
  */
 export function parseFilterAmount(value: string): number | null {
@@ -168,9 +181,14 @@ export function parseFilterAmount(value: string): number | null {
     return null;
   }
 
-  const normalized = trimmed.includes(",")
-    ? trimmed.replace(/\./g, "").replace(",", ".")
-    : trimmed;
+  let normalized = trimmed;
+
+  if (trimmed.includes(",")) {
+    normalized = trimmed.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(trimmed)) {
+    normalized = trimmed.replace(/\./g, "");
+  }
+
   const parsed = Number(normalized);
 
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;

@@ -17,6 +17,7 @@ import {
   EMPTY_TRANSACTION_FILTERS,
   buildDemoTransactions,
   createId,
+  normalizeSearchText,
   parseFilterAmount,
   sortTransactionsByDate,
 } from "../lib/transactions";
@@ -183,18 +184,14 @@ function Transactions() {
   // dados (título, período, faixa de valor e categoria). A filtragem local
   // abaixo é apenas o fallback funcional do protótipo.
   const filteredTransactions = useMemo(() => {
-    const normalizedSearch = filters.search
-      .trim()
-      .toLocaleLowerCase("pt-BR");
+    const normalizedSearch = normalizeSearchText(filters.search);
     const minAmount = parseFilterAmount(filters.minAmount);
     const maxAmount = parseFilterAmount(filters.maxAmount);
 
     return accountTransactions.filter((transaction) => {
       if (
         normalizedSearch &&
-        !transaction.title
-          .toLocaleLowerCase("pt-BR")
-          .includes(normalizedSearch)
+        !normalizeSearchText(transaction.title).includes(normalizedSearch)
       ) {
         return false;
       }
@@ -270,6 +267,10 @@ function Transactions() {
   const handleClearFilters = useCallback(() => {
     setFilters({ ...EMPTY_TRANSACTION_FILTERS });
     setPage(1);
+  }, []);
+
+  const handleCloseAccountModal = useCallback(() => {
+    setIsAccountModalOpen(false);
   }, []);
 
   const releaseReceiptUrl = useCallback((url?: string) => {
@@ -606,7 +607,7 @@ function Transactions() {
       <AccountModal
         isOpen={isAccountModalOpen}
         account={null}
-        onClose={() => setIsAccountModalOpen(false)}
+        onClose={handleCloseAccountModal}
         onSubmit={handleCreateAccount}
       />
 
