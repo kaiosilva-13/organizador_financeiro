@@ -1,3 +1,4 @@
+import type { Account } from "../types/account";
 import type {
   Transaction,
   TransactionCategory,
@@ -165,4 +166,46 @@ export function sortTransactionsByDate(
   return [...transactions].sort((first, second) =>
     second.date.localeCompare(first.date),
   );
+}
+
+/** Arredonda valores monetários para evitar resíduos de ponto flutuante. */
+export function roundCurrency(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/** Retorna quanto as movimentações de uma conta alteram o saldo base. */
+export function getAccountBalanceDelta(
+  transactions: Transaction[],
+  accountId: string,
+): number {
+  return roundCurrency(
+    transactions
+      .filter((transaction) => transaction.accountId === accountId)
+      .reduce(
+        (total, transaction) =>
+          transaction.type === "income"
+            ? total + transaction.amount
+            : total - transaction.amount,
+        0,
+      ),
+  );
+}
+
+/**
+ * Aplica o efeito das movimentações locais ao saldo de cada conta.
+ *
+ * TODO [BACKEND]: Persistir as movimentações e calcular o saldo no servidor,
+ * para que GET /accounts já devolva o valor atualizado. Esta função existe
+ * apenas para demonstrar o fluxo completo enquanto a API não está disponível.
+ */
+export function applyTransactionBalances(
+  accounts: Account[],
+  transactions: Transaction[],
+): Account[] {
+  return accounts.map((account) => ({
+    ...account,
+    balance: roundCurrency(
+      account.balance + getAccountBalanceDelta(transactions, account.id),
+    ),
+  }));
 }

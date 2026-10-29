@@ -18,6 +18,7 @@ import {
 } from "../lib/categoryStorage";
 import {
   EMPTY_TRANSACTION_FILTERS,
+  applyTransactionBalances,
   createId,
   normalizeSearchText,
   parseFilterAmount,
@@ -155,12 +156,19 @@ function Transactions() {
     };
   }, []);
 
+  const accountsWithBalances = useMemo(
+    () => applyTransactionBalances(accounts, transactions),
+    [accounts, transactions],
+  );
+
   const activeAccount = useMemo(
     () =>
-      accounts.find((account) => account.id === selectedAccountId) ??
-      accounts[0] ??
+      accountsWithBalances.find(
+        (account) => account.id === selectedAccountId,
+      ) ??
+      accountsWithBalances[0] ??
       null,
-    [accounts, selectedAccountId],
+    [accountsWithBalances, selectedAccountId],
   );
 
   const categoriesById = useMemo(
@@ -555,7 +563,7 @@ function Transactions() {
           <>
             <TransactionsAccountBar
               account={activeAccount}
-              accounts={accounts}
+              accounts={accountsWithBalances}
               onSelectAccount={handleSelectAccount}
               onCreateAccount={() => setIsAccountModalOpen(true)}
             />
