@@ -4,6 +4,7 @@ import { AlertCircle, Plus, Wallet } from "lucide-react";
 
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AccountModal from "../components/modals/AccountModal";
+import TransactionFilters from "../components/transactions/TransactionFilters";
 import TransactionModal from "../components/transactions/TransactionModal";
 import TransactionsAccountBar from "../components/transactions/TransactionsAccountBar";
 import TransactionsEmptyState from "../components/transactions/TransactionsEmptyState";
@@ -13,14 +14,17 @@ import { API_URL } from "../lib/api";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import {
   DEFAULT_CATEGORIES,
+  EMPTY_TRANSACTION_FILTERS,
   buildDemoTransactions,
   createId,
+  parseFilterAmount,
   sortTransactionsByDate,
 } from "../lib/transactions";
 import type { Account, NewAccountInput } from "../types/account";
 import type {
   Transaction,
   TransactionCategory,
+  TransactionFilterValues,
   TransactionFormInput,
   TransactionReceipt,
 } from "../types/transaction";
@@ -39,6 +43,9 @@ function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] =
     useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
+  const [filters, setFilters] = useState<TransactionFilterValues>({
+    ...EMPTY_TRANSACTION_FILTERS,
+  });
   const [page, setPage] = useState(1);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
@@ -146,12 +153,67 @@ function Transactions() {
     [activeAccount?.id, transactions],
   );
 
+  const hasActiveFilters = useMemo(
+    () => Object.values(filters).some((value) => value.trim().length > 0),
+    [filters],
+  );
+
+  const filteredTransactions = useMemo(() => {
+    const normalizedSearch = filters.search
+      .trim()
+      .toLocaleLowerCase("pt-BR");
+    const minAmount = parseFilterAmount(filters.minAmount);
+    const maxAmount = parseFilterAmount(filters.maxAmount);
+
+    return accountTransactions.filter((transaction) => {
+      if (
+        normalizedSearch &&
+        !transaction.title
+          .toLocaleLowerCase("pt-BR")
+          .includes(normalizedSearch)
+      ) {
+        return false;
+      }
+
+      if (
+        filters.startDate &&
+        (!transaction.date || transaction.date < filters.startDate)
+      ) {
+        return false;
+      }
+
+      if (
+        filters.endDate &&
+        (!transaction.date || transaction.date > filters.endDate)
+      ) {
+        return false;
+      }
+
+      if (minAmount !== null && transaction.amount < minAmount) {
+        return false;
+      }
+
+      if (maxAmount !== null && transaction.amount > maxAmount) {
+        return false;
+      }
+
+      if (
+        filters.categoryId &&
+        transaction.categoryId !== filters.categoryId
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [accountTransactions, filters]);
+
   const totalPages = Math.max(
     1,
-    Math.ceil(accountTransactions.length / PAGE_SIZE),
+    Math.ceil(filteredTransactions.length / PAGE_SIZE),
   );
   const currentPage = Math.min(page, totalPages);
-  const visibleTransactions = accountTransactions.slice(
+  const visibleTransactions = filteredTransactions.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
@@ -167,6 +229,22 @@ function Transactions() {
     },
     [totalPages],
   );
+
+  const handleFilterChange = useCallback(
+    (field: keyof TransactionFilterValues, value: string) => {
+      setFilters((currentFilters) => ({
+        ...currentFilters,
+        [field]: value,
+      }));
+      setPage(1);
+    },
+    [],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilters({ ...EMPTY_TRANSACTION_FILTERS });
+    setPage(1);
+  }, []);
 
   const releaseReceiptUrl = useCallback((url?: string) => {
     if (!url?.startsWith("blob:")) {
@@ -460,19 +538,29 @@ function Transactions() {
             />
 
             <div className="mt-6">
+              <TransactionFilters
+                values={filters}
+                categories={categories}
+                hasActiveFilters={hasActiveFilters}
+                onChange={handleFilterChange}
+                onClear={handleClearFilters}
+              />
+            </div>
+
+            <div className="mt-6">
               <TransactionsTable
                 transactions={visibleTransactions}
-                totalItems={accountTransactions.length}
+                totalItems={filteredTransactions.length}
                 currentPage={currentPage}
                 totalPages={totalPages}
                 pageSize={PAGE_SIZE}
                 categoriesById={categoriesById}
                 hasAnyTransactions={accountTransactions.length > 0}
-                hasActiveFilters={false}
+                hasActiveFilters={hasActiveFilters}
                 onPageChange={handlePageChange}
                 onEdit={handleOpenEditTransaction}
                 onDelete={handleDeleteTransaction}
-                onClearFilters={() => undefined}
+                onClearFilters={handleClearFilters}
                 onCreate={handleOpenNewTransaction}
               />
             </div>
