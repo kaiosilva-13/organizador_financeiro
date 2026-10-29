@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { formatCurrency, parseCurrencyInput } from "../../lib/currency";
+import { getReceiptOpenUrl } from "../../lib/receipts";
 import { CATEGORY_COLORS, formatFileSize } from "../../lib/transactions";
 import type {
   Transaction,
@@ -759,7 +760,7 @@ function TransactionModalContent({
 
                 {existingReceipt && !receiptFile && (
                   <a
-                    href={existingReceipt.url}
+                    href={getReceiptOpenUrl(existingReceipt)}
                     target="_blank"
                     rel="noreferrer"
                     className="shrink-0 text-xs font-semibold text-[#4F26E9] transition hover:underline"

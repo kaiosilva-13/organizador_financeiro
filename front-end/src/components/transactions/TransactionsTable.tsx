@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { formatCurrency } from "../../lib/currency";
+import { getReceiptOpenUrl } from "../../lib/receipts";
 import {
   formatTransactionDate,
   getReceiptLabel,
@@ -111,7 +112,7 @@ function ReceiptLink({ receipt }: { receipt: TransactionReceipt | null }) {
 
   return (
     <a
-      href={receipt.url}
+      href={getReceiptOpenUrl(receipt)}
       target="_blank"
       rel="noreferrer"
       title={`Abrir ${receipt.name}`}
