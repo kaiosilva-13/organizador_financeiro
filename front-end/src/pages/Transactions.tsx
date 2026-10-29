@@ -15,7 +15,6 @@ import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import {
   DEFAULT_CATEGORIES,
   EMPTY_TRANSACTION_FILTERS,
-  buildDemoTransactions,
   createId,
   normalizeSearchText,
   parseFilterAmount,
@@ -43,9 +42,9 @@ import type {
  * - `GET /categories` e `POST /categories`
  * - upload de comprovantes via URL pré-assinada do S3
  *
- * TODO [BACKEND]: Substituir os dados de demonstração, a paginação local e as
- * mutações em memória pelas chamadas acima. O componente já separa os dados
- * por `accountId`, então a troca de conta deve refletir a query da API.
+ * TODO [BACKEND]: Substituir a paginação local e as mutações em memória pelas
+ * chamadas acima. O componente já separa os dados por `accountId`, então a
+ * troca de conta deve refletir a query da API.
  */
 
 const PAGE_SIZE = 6;
@@ -71,7 +70,6 @@ function Transactions() {
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
-  const hasSeededDemoRef = useRef(false);
   const createdReceiptUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -124,12 +122,8 @@ function Transactions() {
         setAccounts(normalizedAccounts);
         setAccountsError("");
 
-        // TODO [BACKEND]: Remover o seed de demonstração e carregar os
-        // lançamentos reais com GET /transactions?accountId=<id>.
-        if (normalizedAccounts.length > 0 && !hasSeededDemoRef.current) {
-          hasSeededDemoRef.current = true;
-          setTransactions(buildDemoTransactions(normalizedAccounts[0].id));
-        }
+        // TODO [BACKEND]: Carregar os lançamentos reais com
+        // GET /transactions?accountId=<id>.
       } catch (error) {
         console.error("Erro ao carregar contas:", error);
 
