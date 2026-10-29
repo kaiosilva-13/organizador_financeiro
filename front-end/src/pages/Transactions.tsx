@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AlertCircle, Plus, Wallet } from "lucide-react";
 
@@ -18,8 +18,13 @@ import {
   createId,
   normalizeSearchText,
   parseFilterAmount,
+  readFileAsDataUrl,
   sortTransactionsByDate,
 } from "../lib/transactions";
+import {
+  loadStoredTransactions,
+  saveStoredTransactions,
+} from "../lib/transactionStorage";
 import type { Account, NewAccountInput } from "../types/account";
 import type {
   Transaction,
@@ -32,7 +37,7 @@ import type {
 /**
  * Página de Movimentações.
  *
- * O front-end mantém os lançamentos em memória enquanto o módulo de
+ * O front-end mantém os lançamentos no localStorage enquanto o módulo de
  * movimentações não existe no back-end. Os pontos de integração previstos são:
  *
  * - `GET /transactions?accountId=&search=&startDate=&endDate=&minAmount=&
@@ -42,9 +47,8 @@ import type {
  * - `GET /categories` e `POST /categories`
  * - upload de comprovantes via URL pré-assinada do S3
  *
- * TODO [BACKEND]: Substituir a paginação local e as mutações em memória pelas
- * chamadas acima. O componente já separa os dados por `accountId`, então a
- * troca de conta deve refletir a query da API.
+ * TODO [BACKEND]: Substituir a persistência local, a paginação e as mutações
+ * pelas chamadas acima. O componente já separa os dados por `accountId`.
  */
 
 const PAGE_SIZE = 6;
@@ -58,7 +62,9 @@ function Transactions() {
   const [accountsError, setAccountsError] = useState("");
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(
+    loadStoredTransactions,
+  );
   // TODO [BACKEND]: Substituir as categorias padrão por GET /categories.
   const [categories, setCategories] =
     useState<TransactionCategory[]>(DEFAULT_CATEGORIES);
@@ -70,15 +76,9 @@ function Transactions() {
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
-  const createdReceiptUrlsRef = useRef<Set<string>>(new Set());
-
   useEffect(() => {
-    const createdReceiptUrls = createdReceiptUrlsRef.current;
-
-    return () => {
-      createdReceiptUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, []);
+    saveStoredTransactions(transactions);
+  }, [transactions]);
 
   useEffect(() => {
     let isMounted = true;
@@ -267,15 +267,6 @@ function Transactions() {
     setIsAccountModalOpen(false);
   }, []);
 
-  const releaseReceiptUrl = useCallback((url?: string) => {
-    if (!url?.startsWith("blob:")) {
-      return;
-    }
-
-    URL.revokeObjectURL(url);
-    createdReceiptUrlsRef.current.delete(url);
-  }, []);
-
   const handleOpenNewTransaction = useCallback(() => {
     setEditingTransaction(null);
     setIsTransactionModalOpen(true);
@@ -339,8 +330,7 @@ function Transactions() {
         // TODO [BACKEND]: Conectar endpoint de upload de comprovantes S3.
         // O fluxo ideal é solicitar uma URL pré-assinada, enviar o arquivo
         // diretamente ao bucket e persistir apenas a chave/URL no banco.
-        const receiptUrl = URL.createObjectURL(input.receiptFile);
-        createdReceiptUrlsRef.current.add(receiptUrl);
+        const receiptUrl = await readFileAsDataUrl(input.receiptFile);
 
         receipt = {
           name: input.receiptFile.name,
@@ -355,10 +345,6 @@ function Transactions() {
       // TODO [BACKEND]: Trocar as mutações locais abaixo por chamadas reais:
       // PUT /transactions/:id para edição e POST /transactions para criação.
       if (editingTransaction) {
-        if (editingTransaction.receipt?.url !== receipt?.url) {
-          releaseReceiptUrl(editingTransaction.receipt?.url);
-        }
-
         setTransactions((currentTransactions) =>
           currentTransactions.map((item) =>
             item.id === editingTransaction.id
@@ -398,7 +384,7 @@ function Transactions() {
       setEditingTransaction(null);
       setIsTransactionModalOpen(false);
     },
-    [activeAccount, categories, editingTransaction, releaseReceiptUrl],
+    [activeAccount, categories, editingTransaction],
   );
 
   const handleDeleteTransaction = useCallback(
@@ -411,15 +397,13 @@ function Transactions() {
         return;
       }
 
-      releaseReceiptUrl(transaction.receipt?.url);
-
       // TODO [BACKEND]: Substituir a remoção local por DELETE
       // /transactions/:id e tratar o comprovante no S3.
       setTransactions((currentTransactions) =>
         currentTransactions.filter((item) => item.id !== transaction.id),
       );
     },
-    [releaseReceiptUrl],
+    [],
   );
 
   const handleCreateAccount = useCallback(

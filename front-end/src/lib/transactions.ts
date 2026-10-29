@@ -49,6 +49,34 @@ export function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Converte um arquivo para data URL. Isso permite manter o comprovante após o
+ * recarregamento da página enquanto o upload definitivo não existe.
+ */
+export function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Não foi possível ler o comprovante selecionado."));
+    };
+
+    reader.onerror = () => {
+      reject(
+        reader.error ??
+          new Error("Não foi possível ler o comprovante selecionado."),
+      );
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 /** Converte `YYYY-MM-DD` para o formato brasileiro `DD/MM/YYYY`. */
 export function formatTransactionDate(date: string): string {
   if (!date) {
