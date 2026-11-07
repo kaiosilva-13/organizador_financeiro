@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { formatCurrency } from "../../lib/currency";
-import { getReceiptOpenUrl } from "../../lib/receipts";
+import { openReceipt } from "../../lib/transactionsApi";
 import {
   formatTransactionDate,
   getReceiptLabel,
@@ -111,17 +111,24 @@ function ReceiptLink({ receipt }: { receipt: TransactionReceipt | null }) {
   }
 
   return (
-    <a
-      href={getReceiptOpenUrl(receipt)}
-      target="_blank"
-      rel="noreferrer"
+    <button
+      type="button"
+      onClick={() => {
+        openReceipt(receipt).catch((error) => {
+          window.alert(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível abrir o comprovante.",
+          );
+        });
+      }}
       title={`Abrir ${receipt.name}`}
       className="inline-flex items-center gap-1.5 rounded-md text-xs font-semibold text-[#4F26E9] transition hover:text-[#411DCB] hover:underline"
     >
       <FileText size={15} aria-hidden="true" />
       {getReceiptLabel(receipt)}
       <ExternalLink size={12} aria-hidden="true" />
-    </a>
+    </button>
   );
 }
 

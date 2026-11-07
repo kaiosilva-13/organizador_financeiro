@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 
 import { formatCurrency, parseCurrencyInput } from "../../lib/currency";
-import { getReceiptOpenUrl } from "../../lib/receipts";
 import { CATEGORY_COLORS, formatFileSize } from "../../lib/transactions";
+import { openReceipt } from "../../lib/transactionsApi";
 import type {
   Transaction,
   TransactionCategory,
@@ -168,9 +168,8 @@ function TransactionModalContent({
     });
   }
 
-  // TODO [BACKEND]: Repetir esta validação no servidor. O upload do
-  // comprovante deve usar URL pré-assinada do S3, com limite de 10 MB,
-  // allowlist de MIME types e varredura de segurança no bucket.
+  // Esta validação também é repetida no servidor. O upload do comprovante usa
+  // multipart junto com a movimentação, com limite de 10 MB e allowlist de MIME types.
   function validateReceipt(file: File): string | null {
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
     const hasAcceptedType = ACCEPTED_RECEIPT_TYPES.includes(file.type);
@@ -759,14 +758,21 @@ function TransactionModalContent({
                 </div>
 
                 {existingReceipt && !receiptFile && (
-                  <a
-                    href={getReceiptOpenUrl(existingReceipt)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openReceipt(existingReceipt).catch((error) => {
+                        window.alert(
+                          error instanceof Error
+                            ? error.message
+                            : "Não foi possível abrir o comprovante.",
+                        );
+                      });
+                    }}
                     className="shrink-0 text-xs font-semibold text-[#4F26E9] transition hover:underline"
                   >
                     Abrir
-                  </a>
+                  </button>
                 )}
 
                 <button

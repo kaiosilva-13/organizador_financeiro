@@ -4,15 +4,30 @@ CREATE TABLE IF NOT EXISTS movimentacao (
     id_usuario INT NOT NULL,
     id_conta_financeira INT NOT NULL,
     id_categoria INT NOT NULL,
+    titulo VARCHAR(255),
     descricao VARCHAR(255) NOT NULL,
     valor NUMERIC(10, 2) NOT NULL,
     tipo VARCHAR(20) NOT NULL,
     data_transacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    url_comprovante VARCHAR(500) DEFAULT NULL,
+    comprovante_nome VARCHAR(255) DEFAULT NULL,
+    comprovante_tipo VARCHAR(100) DEFAULT NULL,
+    comprovante_tamanho INT DEFAULT NULL,
+    comprovante_dados BYTEA DEFAULT NULL,
     CONSTRAINT fk_movimentacao_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE CASCADE,
     CONSTRAINT fk_movimentacao_conta FOREIGN KEY (id_conta_financeira) REFERENCES conta_financeira(id) ON DELETE CASCADE,
     CONSTRAINT fk_movimentacao_categoria FOREIGN KEY (id_categoria) REFERENCES categoria(id) ON DELETE CASCADE
 );
+
+-- Adicionar a coluna titulo em bancos que ja possuem a tabela movimentacao
+ALTER TABLE movimentacao
+ADD COLUMN IF NOT EXISTS titulo VARCHAR(255);
+
+-- Colunas do comprovante (salvo no proprio banco) em bancos que ja possuem a tabela.
+-- Veja tambem: "alteracao - comprovante no banco.sql"
+ALTER TABLE movimentacao ADD COLUMN IF NOT EXISTS comprovante_nome VARCHAR(255);
+ALTER TABLE movimentacao ADD COLUMN IF NOT EXISTS comprovante_tipo VARCHAR(100);
+ALTER TABLE movimentacao ADD COLUMN IF NOT EXISTS comprovante_tamanho INT;
+ALTER TABLE movimentacao ADD COLUMN IF NOT EXISTS comprovante_dados BYTEA;
 
 -- Registrar uma movimentacao 
 INSERT INTO movimentacao (id_usuario, id_conta_financeira, id_categoria, descricao, valor, tipo, url_comprovante)
