@@ -21,17 +21,7 @@ import AccountModal from "../components/modals/AccountModal";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
 import { API_URL } from "../lib/api";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
-import {
-  applyTransactionBalances,
-  getAccountBalanceDelta,
-  roundCurrency,
-} from "../lib/transactions";
-import {
-  loadStoredTransactions,
-  saveStoredTransactions,
-} from "../lib/transactionStorage";
 import type { Account, NewAccountInput } from "../types/account";
-import type { Transaction as StoredTransaction } from "../types/transaction";
 
 export type TransactionType = "income" | "expense";
 
@@ -86,12 +76,6 @@ function Dashboard() {
   const [activeAccountIndex, setActiveAccountIndex] = useState(0);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-
-  // Movimentações locais usadas para simular o saldo atualizado das contas.
-  // TODO [BACKEND]: Remover quando o saldo já vier calculado de GET /accounts.
-  const [localTransactions, setLocalTransactions] = useState<StoredTransaction[]>(
-    loadStoredTransactions,
-  );
 
   useEffect(() => {
     let isMounted = true;
@@ -202,15 +186,8 @@ function Dashboard() {
   const hasTransactions = transactions.length > 0;
   const hasGoals = goals.length > 0;
 
-  // Simula o saldo já atualizado pelas movimentações locais.
-  // TODO [BACKEND]: Substituir pelo saldo calculado no servidor.
-  const accountsWithBalances = useMemo(
-    () => applyTransactionBalances(accounts, localTransactions),
-    [accounts, localTransactions],
-  );
-
-  const activeAccount =
-    accountsWithBalances[activeAccountIndex] ?? accountsWithBalances[0] ?? null;
+  // O saldo já vem calculado do servidor (GET /accounts).
+  const activeAccount = accounts[activeAccountIndex] ?? accounts[0] ?? null;
 
   const availableBalance =
     transactions.length > 0 ? balance : (activeAccount?.balance ?? null);
@@ -250,17 +227,6 @@ function Dashboard() {
         ? `${API_URL}/accounts/${editingAccount.id}`
         : `${API_URL}/accounts`;
 
-      // A modal exibe o saldo já ajustado pelas movimentações locais. Removemos
-      // esse ajuste antes de enviar o saldo base para a API.
-      // TODO [BACKEND]: Com o saldo calculado no servidor, enviar direto.
-      const localBalanceDelta = editingAccount
-        ? getAccountBalanceDelta(localTransactions, editingAccount.id)
-        : 0;
-      const accountPayload = {
-        ...input,
-        balance: roundCurrency(input.balance - localBalanceDelta),
-      };
-
       try {
         const response = await fetch(url, {
           method: isEditing ? "PUT" : "POST",
@@ -268,7 +234,7 @@ function Dashboard() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(accountPayload),
+          body: JSON.stringify(input),
         });
 
         if (!response.ok) {
@@ -324,7 +290,7 @@ function Dashboard() {
         );
       }
     },
-    [editingAccount, handleCloseAccountModal, localTransactions],
+    [editingAccount, handleCloseAccountModal],
   );
 
 
@@ -370,14 +336,8 @@ function Dashboard() {
 
       setAccounts(remainingAccounts);
 
-      // TODO [BACKEND]: O servidor também deve remover (ou arquivar) as
-      // movimentações vinculadas à conta excluída.
-      const remainingLocalTransactions = localTransactions.filter(
-        (transaction) => transaction.accountId !== activeAccount.id,
-      );
-      setLocalTransactions(remainingLocalTransactions);
-      saveStoredTransactions(remainingLocalTransactions);
-
+      // O servidor remove as movimentações (e seus comprovantes) da conta
+      // excluída.
       setActiveAccountIndex((currentIndex) =>
         remainingAccounts.length === 0
           ? 0
@@ -392,7 +352,7 @@ function Dashboard() {
           : "Ocorreu um erro ao excluir a conta."
       );
     }
-  }, [accounts, activeAccount, localTransactions]);
+  }, [accounts, activeAccount]);
 
   const handleSwitchAccount = useCallback(() => {
     if (accounts.length < 2) {

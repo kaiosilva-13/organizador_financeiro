@@ -3,7 +3,6 @@ import type {
   Transaction,
   TransactionCategory,
   TransactionFilterValues,
-  TransactionReceipt,
 } from "../types/transaction";
 
 /** Categorias iniciais exibidas enquanto a API de categorias não está disponível. */
@@ -128,23 +127,6 @@ export function parseFilterAmount(value: string): number | null {
   const parsed = Number(normalized);
 
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-/** Rótulo curto do tipo de comprovante exibido na tabela. */
-export function getReceiptLabel(receipt: TransactionReceipt): string {
-  if (receipt.mimeType === "application/pdf") {
-    return "PDF";
-  }
-
-  if (receipt.mimeType === "image/jpeg") {
-    return "JPG";
-  }
-
-  if (receipt.mimeType === "image/png") {
-    return "PNG";
-  }
-
-  return "Arquivo";
 }
 
 export function formatFileSize(bytes?: number): string {

@@ -12,47 +12,40 @@ import TransactionsTable from "../components/transactions/TransactionsTable";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
 import { API_URL } from "../lib/api";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
+import { EMPTY_TRANSACTION_FILTERS } from "../lib/transactions";
 import {
-  loadStoredCategories,
-  saveStoredCustomCategories,
-} from "../lib/categoryStorage";
-import {
-  EMPTY_TRANSACTION_FILTERS,
-  applyTransactionBalances,
-  createId,
-  normalizeSearchText,
-  parseFilterAmount,
-  readFileAsDataUrl,
-  sortTransactionsByDate,
-} from "../lib/transactions";
-import {
-  loadStoredTransactions,
-  saveStoredTransactions,
-} from "../lib/transactionStorage";
+  createCategory,
+  createTransaction,
+  deleteTransaction,
+  fetchAccounts,
+  fetchCategories,
+  fetchTransactions,
+  updateTransaction,
+} from "../lib/transactionsApi";
+import type { TransactionPayload } from "../lib/transactionsApi";
 import type { Account, NewAccountInput } from "../types/account";
 import type {
   Transaction,
   TransactionCategory,
   TransactionFilterValues,
   TransactionFormInput,
-  TransactionReceipt,
 } from "../types/transaction";
 
 /**
  * Página de Movimentações.
  *
- * O front-end mantém os lançamentos no localStorage enquanto o módulo de
- * movimentações não existe no back-end. Os pontos de integração previstos são:
+ * Os lançamentos, as categorias e os comprovantes são persistidos pelo
+ * back-end. Os pontos de integração utilizados são:
  *
  * - `GET /transactions?accountId=&search=&startDate=&endDate=&minAmount=&
  *    maxAmount=&categoryId=&page=&limit=`
  * - `POST /transactions` e `PUT /transactions/:id`
  * - `DELETE /transactions/:id`
  * - `GET /categories` e `POST /categories`
- * - upload de comprovantes via URL pré-assinada do S3
+ * - comprovantes enviados junto com a movimentação e salvos no banco
  *
- * TODO [BACKEND]: Substituir a persistência local, a paginação e as mutações
- * pelas chamadas acima. O componente já separa os dados por `accountId`.
+ * O saldo das contas é calculado no servidor (`GET /accounts`). Os filtros e a
+ * paginação também são aplicados no servidor.
  */
 
 const PAGE_SIZE = 6;
@@ -66,29 +59,52 @@ function Transactions() {
   const [accountsError, setAccountsError] = useState("");
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
-  const [transactions, setTransactions] = useState<Transaction[]>(
-    loadStoredTransactions,
-  );
-  // As categorias padrão são combinadas com as personalizadas salvas localmente.
-  // TODO [BACKEND]: Substituir por GET /categories quando o endpoint existir.
-  const [categories, setCategories] = useState<TransactionCategory[]>(
-    loadStoredCategories,
-  );
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [accountTotal, setAccountTotal] = useState(0);
+  const [loadedAccountId, setLoadedAccountId] = useState("");
+  const [transactionsError, setTransactionsError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [categories, setCategories] = useState<TransactionCategory[]>([]);
   const [filters, setFilters] = useState<TransactionFilterValues>({
     ...EMPTY_TRANSACTION_FILTERS,
   });
+  const [debouncedFilters, setDebouncedFilters] =
+    useState<TransactionFilterValues>({ ...EMPTY_TRANSACTION_FILTERS });
   const [page, setPage] = useState(1);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
+  // Evita uma requisição a cada tecla digitada nos filtros.
   useEffect(() => {
-    saveStoredTransactions(transactions);
-  }, [transactions]);
+    const timer = window.setTimeout(() => setDebouncedFilters(filters), 300);
+
+    return () => window.clearTimeout(timer);
+  }, [filters]);
 
   useEffect(() => {
-    saveStoredCustomCategories(categories);
-  }, [categories]);
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+
+        if (isMounted) {
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,9 +147,6 @@ function Transactions() {
 
         setAccounts(normalizedAccounts);
         setAccountsError("");
-
-        // TODO [BACKEND]: Carregar os lançamentos reais com
-        // GET /transactions?accountId=<id>.
       } catch (error) {
         console.error("Erro ao carregar contas:", error);
 
@@ -156,34 +169,18 @@ function Transactions() {
     };
   }, []);
 
-  const accountsWithBalances = useMemo(
-    () => applyTransactionBalances(accounts, transactions),
-    [accounts, transactions],
-  );
-
   const activeAccount = useMemo(
     () =>
-      accountsWithBalances.find(
-        (account) => account.id === selectedAccountId,
-      ) ??
-      accountsWithBalances[0] ??
+      accounts.find((account) => account.id === selectedAccountId) ??
+      accounts[0] ??
       null,
-    [accountsWithBalances, selectedAccountId],
+    [accounts, selectedAccountId],
   );
+  const activeAccountId = activeAccount?.id;
 
   const categoriesById = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
     [categories],
-  );
-
-  const accountTransactions = useMemo(
-    () =>
-      sortTransactionsByDate(
-        transactions.filter(
-          (transaction) => transaction.accountId === activeAccount?.id,
-        ),
-      ),
-    [activeAccount?.id, transactions],
   );
 
   const hasActiveFilters = useMemo(
@@ -191,66 +188,71 @@ function Transactions() {
     [filters],
   );
 
-  // TODO [BACKEND]: Implementar estes filtros como query params no banco de
-  // dados (título, período, faixa de valor e categoria). A filtragem local
-  // abaixo é apenas o fallback funcional do protótipo.
-  const filteredTransactions = useMemo(() => {
-    const normalizedSearch = normalizeSearchText(filters.search);
-    const minAmount = parseFilterAmount(filters.minAmount);
-    const maxAmount = parseFilterAmount(filters.maxAmount);
+  // Os filtros (título, período, faixa de valor e categoria) e a paginação são
+  // aplicados no banco de dados via query params de GET /transactions.
+  useEffect(() => {
+    if (!activeAccountId) {
+      return;
+    }
 
-    return accountTransactions.filter((transaction) => {
-      if (
-        normalizedSearch &&
-        !normalizeSearchText(transaction.title).includes(normalizedSearch)
-      ) {
-        return false;
+    const accountId = activeAccountId;
+    let isCurrent = true;
+
+    async function loadTransactions() {
+      try {
+        const result = await fetchTransactions({
+          accountId,
+          filters: debouncedFilters,
+          page,
+          limit: PAGE_SIZE,
+        });
+
+        if (!isCurrent) {
+          return;
+        }
+
+        setTransactions(result.items);
+        setTotalItems(result.total);
+        setTotalPages(result.totalPages);
+        setAccountTotal(result.accountTotal);
+        setTransactionsError("");
+        setLoadedAccountId(accountId);
+
+        // Ex.: a última movimentação da última página foi excluída.
+        if (result.page > result.totalPages) {
+          setPage(result.totalPages);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar movimentações:", error);
+
+        if (isCurrent) {
+          setTransactionsError(
+            "Não foi possível carregar suas movimentações agora.",
+          );
+          setLoadedAccountId(accountId);
+        }
       }
+    }
 
-      if (
-        filters.startDate &&
-        (!transaction.date || transaction.date < filters.startDate)
-      ) {
-        return false;
-      }
+    loadTransactions();
 
-      if (
-        filters.endDate &&
-        (!transaction.date || transaction.date > filters.endDate)
-      ) {
-        return false;
-      }
+    return () => {
+      isCurrent = false;
+    };
+  }, [activeAccountId, debouncedFilters, page, reloadKey]);
 
-      if (minAmount !== null && transaction.amount < minAmount) {
-        return false;
-      }
-
-      if (maxAmount !== null && transaction.amount > maxAmount) {
-        return false;
-      }
-
-      if (
-        filters.categoryId &&
-        transaction.categoryId !== filters.categoryId
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [accountTransactions, filters]);
-
-  // TODO [BACKEND]: Migrar para paginação server-side (`page`/`limit`) para
-  // não transferir todo o histórico do usuário em cada consulta.
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredTransactions.length / PAGE_SIZE),
-  );
+  const isLoadingTransactions = loadedAccountId !== activeAccountId;
   const currentPage = Math.min(page, totalPages);
-  const visibleTransactions = filteredTransactions.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+
+  // O saldo vem calculado do servidor: recarregamos as contas após cada
+  // criação, edição ou exclusão de movimentação.
+  const refreshAccounts = useCallback(async () => {
+    try {
+      setAccounts(await fetchAccounts());
+    } catch (error) {
+      console.error("Erro ao atualizar o saldo das contas:", error);
+    }
+  }, []);
 
   const handleSelectAccount = useCallback((accountId: string) => {
     setSelectedAccountId(accountId);
@@ -310,8 +312,6 @@ function Transactions() {
         null;
 
       if (input.newCategory) {
-        // TODO [BACKEND]: Persistir a nova categoria com POST /categories e
-        // usar o `id` retornado pela API antes de salvar a movimentação.
         const newCategoryName = input.newCategory.name.trim();
         const existingCategory = categories.find(
           (category) =>
@@ -322,17 +322,18 @@ function Transactions() {
         if (existingCategory) {
           resolvedCategory = existingCategory;
         } else {
-          const newCategory: TransactionCategory = {
-            id: createId("category"),
+          // A categoria é salva antes da movimentação para usar o `id` real.
+          const newCategory = await createCategory({
             name: newCategoryName,
             color: input.newCategory.color,
-          };
+          });
 
           resolvedCategory = newCategory;
-          setCategories((currentCategories) => [
-            ...currentCategories,
-            newCategory,
-          ]);
+          setCategories((currentCategories) =>
+            currentCategories.some((category) => category.id === newCategory.id)
+              ? currentCategories
+              : [...currentCategories, newCategory],
+          );
         }
       }
 
@@ -340,72 +341,35 @@ function Transactions() {
         throw new Error("Selecione uma categoria para a movimentação.");
       }
 
-      let receipt: TransactionReceipt | null =
-        editingTransaction?.receipt ?? null;
+      const payload: TransactionPayload = {
+        title: input.title,
+        description: input.description,
+        amount: input.amount,
+        type: input.type,
+        categoryId: resolvedCategory.id,
+        date: input.date || undefined,
+        receiptFile: input.receiptFile ?? undefined,
+        removeReceipt:
+          input.removeReceipt && !input.receiptFile ? true : undefined,
+      };
 
-      if (input.receiptFile) {
-        // TODO [BACKEND]: Conectar endpoint de upload de comprovantes S3.
-        // O fluxo ideal é solicitar uma URL pré-assinada, enviar o arquivo
-        // diretamente ao bucket e persistir apenas a chave/URL no banco.
-        const receiptUrl = await readFileAsDataUrl(input.receiptFile);
-
-        receipt = {
-          name: input.receiptFile.name,
-          url: receiptUrl,
-          mimeType: input.receiptFile.type || undefined,
-          size: input.receiptFile.size,
-        };
-      } else if (input.removeReceipt) {
-        receipt = null;
-      }
-
-      // TODO [BACKEND]: Trocar as mutações locais abaixo por chamadas reais:
-      // PUT /transactions/:id para edição e POST /transactions para criação.
       if (editingTransaction) {
-        setTransactions((currentTransactions) =>
-          currentTransactions.map((item) =>
-            item.id === editingTransaction.id
-              ? {
-                  ...item,
-                  title: input.title,
-                  description: input.description,
-                  amount: input.amount,
-                  type: input.type,
-                  categoryId: resolvedCategory.id,
-                  date: input.date,
-                  receipt,
-                }
-              : item,
-          ),
-        );
+        await updateTransaction(editingTransaction.id, payload);
       } else {
-        const newTransaction: Transaction = {
-          id: createId("transaction"),
-          accountId: activeAccount.id,
-          title: input.title,
-          description: input.description,
-          amount: input.amount,
-          type: input.type,
-          categoryId: resolvedCategory.id,
-          date: input.date,
-          receipt,
-        };
-
-        setTransactions((currentTransactions) => [
-          newTransaction,
-          ...currentTransactions,
-        ]);
+        await createTransaction(activeAccount.id, payload);
         setPage(1);
       }
 
+      setReloadKey((currentKey) => currentKey + 1);
+      void refreshAccounts();
       setEditingTransaction(null);
       setIsTransactionModalOpen(false);
     },
-    [activeAccount, categories, editingTransaction],
+    [activeAccount, categories, editingTransaction, refreshAccounts],
   );
 
   const handleDeleteTransaction = useCallback(
-    (transaction: Transaction) => {
+    async (transaction: Transaction) => {
       const confirmed = window.confirm(
         `Tem certeza que deseja excluir a movimentação "${transaction.title}"? Essa ação não pode ser desfeita.`,
       );
@@ -414,13 +378,22 @@ function Transactions() {
         return;
       }
 
-      // TODO [BACKEND]: Substituir a remoção local por DELETE
-      // /transactions/:id e tratar o comprovante no S3.
-      setTransactions((currentTransactions) =>
-        currentTransactions.filter((item) => item.id !== transaction.id),
-      );
+      try {
+        // O comprovante é removido junto, pois fica salvo na movimentação.
+        await deleteTransaction(transaction.id);
+        setReloadKey((currentKey) => currentKey + 1);
+        void refreshAccounts();
+      } catch (error) {
+        console.error("Erro ao excluir movimentação:", error);
+
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao excluir a movimentação.",
+        );
+      }
     },
-    [],
+    [refreshAccounts],
   );
 
   const handleCreateAccount = useCallback(
@@ -563,7 +536,7 @@ function Transactions() {
           <>
             <TransactionsAccountBar
               account={activeAccount}
-              accounts={accountsWithBalances}
+              accounts={accounts}
               onSelectAccount={handleSelectAccount}
               onCreateAccount={() => setIsAccountModalOpen(true)}
             />
@@ -579,21 +552,46 @@ function Transactions() {
             </div>
 
             <div className="mt-6">
-              <TransactionsTable
-                transactions={visibleTransactions}
-                totalItems={filteredTransactions.length}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={PAGE_SIZE}
-                categoriesById={categoriesById}
-                hasAnyTransactions={accountTransactions.length > 0}
-                hasActiveFilters={hasActiveFilters}
-                onPageChange={handlePageChange}
-                onEdit={handleOpenEditTransaction}
-                onDelete={handleDeleteTransaction}
-                onClearFilters={handleClearFilters}
-                onCreate={handleOpenNewTransaction}
-              />
+              {isLoadingTransactions ? (
+                <div
+                  className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white"
+                  aria-label="Carregando movimentações"
+                />
+              ) : (
+                <>
+                  {transactionsError && (
+                    <div
+                      role="alert"
+                      className="mb-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-5"
+                    >
+                      <AlertCircle
+                        size={20}
+                        aria-hidden="true"
+                        className="mt-0.5 shrink-0 text-rose-600"
+                      />
+                      <p className="text-sm font-semibold text-rose-800">
+                        {transactionsError}
+                      </p>
+                    </div>
+                  )}
+
+                  <TransactionsTable
+                    transactions={transactions}
+                    totalItems={totalItems}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    pageSize={PAGE_SIZE}
+                    categoriesById={categoriesById}
+                    hasAnyTransactions={accountTotal > 0}
+                    hasActiveFilters={hasActiveFilters}
+                    onPageChange={handlePageChange}
+                    onEdit={handleOpenEditTransaction}
+                    onDelete={handleDeleteTransaction}
+                    onClearFilters={handleClearFilters}
+                    onCreate={handleOpenNewTransaction}
+                  />
+                </>
+              )}
             </div>
           </>
         )}

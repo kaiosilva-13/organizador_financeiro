@@ -21,10 +21,7 @@ export type TransactionCategory = {
 };
 
 export type TransactionReceipt = {
-  name: string;
   url: string;
-  mimeType?: string;
-  size?: number;
 };
 
 export type Transaction = {
