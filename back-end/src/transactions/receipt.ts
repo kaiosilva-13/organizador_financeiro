@@ -20,9 +20,6 @@ export interface UploadedReceiptFile {
 }
 
 export type ValidatedReceipt = {
-  nome: string;
-  tipo: string;
-  tamanho: number;
   dados: Buffer;
 };
 
@@ -83,10 +80,16 @@ export function validateReceiptFile(
     );
   }
 
-  return {
-    nome: name || `comprovante.${extension}`,
-    tipo: mimeType,
-    tamanho: file.buffer.length,
-    dados: file.buffer,
-  };
+  return { dados: file.buffer };
+}
+
+/** Descobre o tipo do comprovante pelo conteúdo (o tipo não é salvo no banco). */
+export function detectReceiptMimeType(bytes: Buffer): string {
+  for (const mimeType of ['application/pdf', 'image/png', 'image/jpeg']) {
+    if (matchesFileSignature(mimeType, bytes)) {
+      return mimeType;
+    }
+  }
+
+  return 'application/octet-stream';
 }

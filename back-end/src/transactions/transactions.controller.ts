@@ -52,7 +52,7 @@ export class TransactionsController {
 
     return new StreamableFile(receipt.dados, {
       type: receipt.tipo,
-      disposition: `inline; filename*=UTF-8''${encodeURIComponent(receipt.nome)}`,
+      disposition: 'inline',
       length: receipt.dados.length,
     });
   }

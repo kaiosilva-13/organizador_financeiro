@@ -17,7 +17,6 @@ import { formatCurrency } from "../../lib/currency";
 import { openReceipt } from "../../lib/transactionsApi";
 import {
   formatTransactionDate,
-  getReceiptLabel,
 } from "../../lib/transactions";
 import type {
   Transaction,
@@ -122,11 +121,11 @@ function ReceiptLink({ receipt }: { receipt: TransactionReceipt | null }) {
           );
         });
       }}
-      title={`Abrir ${receipt.name}`}
+      title="Abrir comprovante"
       className="inline-flex items-center gap-1.5 rounded-md text-xs font-semibold text-[#4F26E9] transition hover:text-[#411DCB] hover:underline"
     >
       <FileText size={15} aria-hidden="true" />
-      {getReceiptLabel(receipt)}
+      Comprovante
       <ExternalLink size={12} aria-hidden="true" />
     </button>
   );

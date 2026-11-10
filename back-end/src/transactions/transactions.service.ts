@@ -10,7 +10,11 @@ import { Categoria } from '../categories/category.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { UploadedReceiptFile, validateReceiptFile } from './receipt';
+import {
+  detectReceiptMimeType,
+  UploadedReceiptFile,
+  validateReceiptFile,
+} from './receipt';
 import { Movimentacao } from './transaction.entity';
 
 const TYPE_TO_DB = { income: 'RECEITA', expense: 'DESPESA' } as const;
@@ -80,13 +84,12 @@ export class TransactionsService {
       .andWhere('m.idUsuario = :userId', { userId })
       .getOne();
 
-    if (!row || !row.comprovanteDados || !row.comprovanteNome) {
+    if (!row || !row.comprovanteDados) {
       throw new NotFoundException('Comprovante não encontrado.');
     }
 
     return {
-      nome: row.comprovanteNome,
-      tipo: row.comprovanteTipo ?? 'application/octet-stream',
+      tipo: detectReceiptMimeType(row.comprovanteDados),
       dados: row.comprovanteDados,
     };
   }
@@ -197,9 +200,6 @@ export class TransactionsService {
           valor: dto.amount.toFixed(2),
           tipo: TYPE_TO_DB[dto.type],
           dataTransacao: dto.date,
-          comprovanteNome: receipt?.nome ?? null,
-          comprovanteTipo: receipt?.tipo ?? null,
-          comprovanteTamanho: receipt?.tamanho ?? null,
           comprovanteDados: receipt?.dados ?? null,
         }),
       );
@@ -262,14 +262,8 @@ export class TransactionsService {
         }
 
         if (receipt) {
-          existing.comprovanteNome = receipt.nome;
-          existing.comprovanteTipo = receipt.tipo;
-          existing.comprovanteTamanho = receipt.tamanho;
           existing.comprovanteDados = receipt.dados;
         } else if (dto.removeReceipt) {
-          existing.comprovanteNome = null;
-          existing.comprovanteTipo = null;
-          existing.comprovanteTamanho = null;
           existing.comprovanteDados = null;
         }
 
@@ -386,19 +380,14 @@ export class TransactionsService {
   }
 
   /**
-   * Metadados do comprovante. O arquivo em si não vai na resposta: o front o
-   * baixa (com o token) em `GET /transactions/:id/receipt`.
+   * O arquivo em si não vai na resposta: o front o baixa (com o token) em
+   * `GET /transactions/:id/receipt`.
    */
   private buildReceipt(transaction: Movimentacao) {
-    if (!transaction.comprovanteNome) {
+    if (!transaction.temComprovante) {
       return null;
     }
 
-    return {
-      name: transaction.comprovanteNome,
-      url: `/transactions/${transaction.id}/receipt`,
-      mimeType: transaction.comprovanteTipo ?? undefined,
-      size: transaction.comprovanteTamanho ?? undefined,
-    };
+    return { url: `/transactions/${transaction.id}/receipt` };
   }
 }

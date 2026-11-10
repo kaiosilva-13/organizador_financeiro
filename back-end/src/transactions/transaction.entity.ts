@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, VirtualColumn } from 'typeorm';
 
 @Entity('movimentacao')
 export class Movimentacao {
@@ -35,18 +35,6 @@ export class Movimentacao {
   @Column({ name: 'data_transacao', type: 'date' })
   dataTransacao: string;
 
-  /** Nome original do arquivo do comprovante (nulo quando não há comprovante). */
-  @Column({ name: 'comprovante_nome', type: 'varchar', length: 255, nullable: true })
-  comprovanteNome: string | null;
-
-  /** MIME type do comprovante: PDF, JPG ou PNG. */
-  @Column({ name: 'comprovante_tipo', type: 'varchar', length: 100, nullable: true })
-  comprovanteTipo: string | null;
-
-  /** Tamanho do comprovante em bytes. */
-  @Column({ name: 'comprovante_tamanho', type: 'int', nullable: true })
-  comprovanteTamanho: number | null;
-
   /**
    * Conteúdo do comprovante (binário). Fica fora das consultas por padrão
    * (`select: false`) para não carregar arquivos na listagem; só é lido em
@@ -54,4 +42,10 @@ export class Movimentacao {
    */
   @Column({ name: 'comprovante_dados', type: 'bytea', nullable: true, select: false })
   comprovanteDados: Buffer | null;
+
+  /** Indica se há comprovante, sem carregar o binário. */
+  @VirtualColumn({
+    query: (alias) => `SELECT ${alias}.comprovante_dados IS NOT NULL`,
+  })
+  temComprovante: boolean;
 }

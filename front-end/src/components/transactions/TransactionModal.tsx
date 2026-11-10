@@ -124,7 +124,8 @@ function TransactionModalContent({
   const existingReceipt =
     transaction?.receipt && !removeReceipt ? transaction.receipt : null;
   const displayedReceipt = receiptFile ?? existingReceipt;
-  const displayedReceiptSize = receiptFile?.size ?? existingReceipt?.size;
+  const displayedReceiptName = receiptFile?.name ?? "Comprovante anexado";
+  const displayedReceiptSize = receiptFile?.size;
 
   useEffect(() => {
     const previouslyFocusedElement =
@@ -746,9 +747,9 @@ function TransactionModalContent({
                 <div className="min-w-0 flex-1">
                   <p
                     className="truncate text-sm font-semibold text-slate-800"
-                    title={displayedReceipt.name}
+                    title={displayedReceiptName}
                   >
-                    {displayedReceipt.name}
+                    {displayedReceiptName}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     {formatFileSize(displayedReceiptSize)}
