@@ -16,6 +16,7 @@ const DEFAULT_CATEGORIES = [
   { nome: 'Saúde', cor: '#0D9488' },
   { nome: 'Lazer', cor: '#DB2777' },
   { nome: 'Educação', cor: '#CA8A04' },
+  { nome: 'Gastos Fixos', cor: '#030862' },
   { nome: 'Outros', cor: '#475569' },
 ];
 

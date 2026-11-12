@@ -20,6 +20,7 @@ FROM (VALUES
     ('Saúde', '#0D9488'),
     ('Lazer', '#DB2777'),
     ('Educação', '#CA8A04'),
+    ('Gastos Fixos', '#030862'),
     ('Outros', '#475569')
 ) AS v(nome, cor)
 WHERE NOT EXISTS (
