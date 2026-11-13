@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import VerifyCode from "./pages/VerifyCode";
 import Dashboard from "./pages/Dashboard";
+import FixedExpenses from "./pages/FixedExpenses";
 import Transactions from "./pages/Transactions";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movimentacoes" element={<Transactions />} />
+        <Route path="/gastos-fixos" element={<FixedExpenses />} />
         <Route path="/cadastro" element={<Register />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/esqueci-senha" element={<ForgotPassword />} />
