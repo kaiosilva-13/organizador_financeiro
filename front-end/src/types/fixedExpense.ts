@@ -27,25 +27,43 @@
  *
  * fixed_expense_payments
  * - id                UUID PK
- * - fixed_expense_id  UUID FK -> fixed_expenses(id) ON DELETE CASCADE
+ * - fixed_expense_id  UUID FK -> fixed_expenses(id) ON DELETE RESTRICT
  * - account_id        UUID FK -> accounts(id) ON DELETE RESTRICT
+ * - transaction_id    UUID NULL FK -> movimentacao(id) ON DELETE SET NULL
  * - paid_at           DATE NOT NULL
  * - amount            NUMERIC(12,2) NOT NULL CHECK (amount > 0)
- * - receipt_content   BYTEA NULL
- * - receipt_mime      VARCHAR(60) NULL
- * - receipt_name      VARCHAR(255) NULL
  * - created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+ *
+ * O comprovante não deve ser duplicado em `fixed_expense_payments`: ele já é
+ * gravado em `movimentacao.comprovante_dados` por `POST /transactions` e lido
+ * por `GET /transactions/:id/receipt`. O histórico do gasto fixo deve exibir o
+ * comprovante a partir da movimentação vinculada.
  *
  * TODO [BACKEND]:
  * - Em `POST /api/fixed-expenses/:id/payments`, persistir o pagamento,
- *   debitar `amount` do saldo da conta e gravar o comprovante na mesma
- *   transação de banco de dados.
+ *   criar a movimentação de despesa, debitar `amount` do saldo da conta e
+ *   gravar o comprovante na mesma transação de banco de dados. O front-end
+ *   chama `POST /transactions` nesta primeira versão, mas o endpoint dedicado
+ *   deve ser atômico para evitar pagamento sem movimentação (ou vice-versa).
+ * - Criar o vínculo `fixed_expense_payments.transaction_id` com
+ *   `movimentacao.id`. Ao excluir a movimentação, usar `ON DELETE SET NULL`
+ *   para preservar o histórico do gasto fixo sem manter uma referência órfã.
+ * - Ao editar um pagamento, atualizar também a movimentação vinculada
+ *   (`titulo`, `valor`, `data_transacao`, `id_conta_financeira` e
+ *   `comprovante_dados`) e recalcular o saldo da conta antiga e da nova na
+ *   mesma transação SQL, para que Movimentações e Gastos Fixos não divirjam.
+ * - Ao excluir um pagamento, definir explicitamente se a movimentação será
+ *   removida ou estornada; em ambos os casos, recalcular
+ *   `conta_financeira.saldo_atual` na mesma transação SQL.
  * - Criar índice único em (fixed_expense_id, DATE_TRUNC('month', paid_at))
  *   para impedir dois pagamentos do mesmo gasto no mesmo mês.
  * - Aplicar `user_id` em todas as consultas para garantir isolamento entre
  *   usuários, inclusive no histórico e nos filtros de data.
  * - Em `GET /api/fixed-expenses/:id/payments`, aceitar `startDate` e `endDate`
  *   (`YYYY-MM-DD`) e filtrar por `paid_at` no banco, não em memória.
+ * - Definir a política ao excluir um gasto fixo: recomenda-se preservar as
+ *   movimentações financeiras já realizadas e remover apenas os vínculos
+ *   (`fixed_expense_id`/`transaction_id`), nunca apagar o histórico financeiro.
  */
 
 /** Dados editáveis no cadastro de um gasto fixo. */
@@ -71,6 +89,13 @@ export type FixedExpenseHistoryFilters = {
 /** Um pagamento mensal já realizado para o gasto fixo. */
 export type FixedExpensePayment = {
   id: string;
+  /**
+   * Identificador da movimentação de despesa criada na conta utilizada.
+   *
+   * TODO [BACKEND]: Persistir o vínculo no banco (`transaction_id`) para que
+   * edição/exclusão da movimentação possa refletir no histórico do gasto fixo.
+   */
+  transactionId: string | null;
   /** Data do pagamento no formato ISO `YYYY-MM-DD`. */
   paidAt: string;
   amount: number;

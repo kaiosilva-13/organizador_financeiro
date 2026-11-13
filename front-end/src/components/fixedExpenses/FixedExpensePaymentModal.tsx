@@ -200,9 +200,11 @@ function FixedExpensePaymentModalContent({
     setErrors({});
 
     try {
-      // TODO [BACKEND]: Persistir pagamento e debitar saldo da conta
-      // selecionada via API:
-      // POST /api/fixed-expenses/:id/payments (multipart com o comprovante).
+      // A página cria a movimentação de despesa em `POST /transactions` e
+      // atualiza o saldo da conta antes de fechar esta modal.
+      // TODO [BACKEND]: Consolidar em POST /api/fixed-expenses/:id/payments,
+      // que deve criar pagamento + movimentação + débito do saldo + upload do
+      // comprovante em uma única transação SQL (multipart/form-data).
       await onSubmit({
         accountId: selectedAccountId,
         receiptFile,
@@ -414,8 +416,9 @@ function FixedExpensePaymentModalContent({
         </div>
 
         <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 text-xs leading-relaxed text-indigo-900">
-          O pagamento será registrado no histórico mensal e vinculado à conta
-          escolhida acima.
+          O pagamento será registrado no histórico mensal e também como uma
+          despesa em <strong>Movimentações</strong>, vinculado à conta escolhida
+          acima. O valor será debitado do saldo dessa conta.
         </div>
 
         {errors.form && (

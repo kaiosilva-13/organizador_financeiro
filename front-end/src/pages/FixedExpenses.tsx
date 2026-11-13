@@ -7,6 +7,7 @@ import FixedExpenseFormModal from "../components/fixedExpenses/FixedExpenseFormM
 import FixedExpenseHistoryModal from "../components/fixedExpenses/FixedExpenseHistoryModal";
 import FixedExpensePaymentModal from "../components/fixedExpenses/FixedExpensePaymentModal";
 import DeleteFixedExpenseModal from "../components/fixedExpenses/DeleteFixedExpenseModal";
+import FixedExpensesAccountBalances from "../components/fixedExpenses/FixedExpensesAccountBalances";
 import FixedExpensesTable from "../components/fixedExpenses/FixedExpensesTable";
 import AccountModal from "../components/modals/AccountModal";
 import TransactionsEmptyState from "../components/transactions/TransactionsEmptyState";
@@ -15,6 +16,7 @@ import { API_URL } from "../lib/api";
 import { formatCurrency } from "../lib/currency";
 import {
   FIXED_EXPENSE_CATEGORY,
+  FIXED_EXPENSE_CATEGORY_COLOR,
   getTodayISO,
   hasPaymentInMonth,
   loadFixedExpenses,
@@ -22,8 +24,17 @@ import {
   sortFixedExpenses,
 } from "../lib/fixedExpenses";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
-import { createId } from "../lib/transactions";
-import { fetchAccounts } from "../lib/transactionsApi";
+import {
+  createId,
+  normalizeSearchText,
+  roundCurrency,
+} from "../lib/transactions";
+import {
+  createCategory,
+  createTransaction,
+  fetchAccounts,
+  fetchCategories,
+} from "../lib/transactionsApi";
 import type { Account, NewAccountInput } from "../types/account";
 import type {
   FixedExpense,
@@ -31,6 +42,7 @@ import type {
   FixedExpensePayment,
   FixedExpensePaymentInput,
 } from "../types/fixedExpense";
+import type { TransactionCategory } from "../types/transaction";
 
 /**
  * Página de Gastos Fixos.
@@ -39,6 +51,11 @@ import type {
  * exclusão) funciona localmente nesta primeira versão. Os gastos são mantidos
  * em `localStorage` por `lib/fixedExpenses.ts`; as contas continuam vindo de
  * `GET /accounts`.
+ *
+ * Cada pagamento mensal também cria uma despesa em `POST /transactions`,
+ * usando a conta selecionada e a categoria padrão "Gastos Fixos". A API de
+ * movimentações já atualiza o saldo da conta de forma atômica, e a página
+ * recarrega `GET /accounts` para renderizar o novo saldo.
  *
  * TODO [BACKEND]: Substituir a persistência local pelas rotas autenticadas:
  * - GET    /api/fixed-expenses
@@ -50,8 +67,14 @@ import type {
  * - GET    /api/fixed-expenses/:id/payments?startDate=&endDate=
  * - upload do comprovante em multipart/form-data (PDF/JPG/PNG até 10 MB)
  *
- * A exclusão deve remover os pagamentos em cascata; a inativação deve apenas
- * alterar `isActive`, preservando todo o histórico.
+ * TODO [BACKEND]: O endpoint de pagamento deve ser atômico: criar
+ * `fixed_expense_payments`, criar a movimentação, debitar a conta e salvar o
+ * comprovante na mesma transação SQL. Nesta versão o front-end cria a
+ * movimentação via `POST /transactions` antes de registrar o pagamento local.
+ *
+ * A inativação deve apenas alterar `isActive`, preservando todo o histórico.
+ * A exclusão do gasto fixo deve preservar as movimentações financeiras já
+ * realizadas; o vínculo deve ser tratado no banco com `ON DELETE SET NULL`.
  */
 function FixedExpenses() {
   const userName = useAuthenticatedUser();
@@ -60,6 +83,12 @@ function FixedExpenses() {
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [accountsError, setAccountsError] = useState("");
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [categories, setCategories] = useState<TransactionCategory[]>([]);
+  const [lastPayment, setLastPayment] = useState<{
+    accountId: string;
+    amount: number;
+    title: string;
+  } | null>(null);
 
   /**
    * Lista de gastos fixos do usuário.
@@ -110,6 +139,30 @@ function FixedExpenses() {
     }
 
     loadAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+
+        if (isMounted) {
+          setCategories(data);
+        }
+      } catch (error) {
+        // Não bloqueia a listagem: a categoria é resolvida novamente no
+        // momento do pagamento.
+        console.error("Erro ao carregar categorias:", error);
+      }
+    }
+
+    loadCategories();
 
     return () => {
       isMounted = false;
@@ -220,6 +273,56 @@ function FixedExpenses() {
     setPayingExpense(null);
   }, []);
 
+  /**
+   * Busca a categoria padrão "Gastos Fixos" usada na movimentação.
+   *
+   * A categoria já é criada pelo back-end em `categories.service.ts`. Caso a
+   * listagem esteja desatualizada, tentamos recarregar e, em último caso,
+   * `POST /categories` reaproveita a categoria existente pelo nome.
+   */
+  const resolveFixedExpenseCategory =
+    useCallback(async (): Promise<TransactionCategory> => {
+      const findCategory = (items: TransactionCategory[]) =>
+        items.find(
+          (category) =>
+            normalizeSearchText(category.name) ===
+            normalizeSearchText(FIXED_EXPENSE_CATEGORY),
+        );
+
+      const cachedCategory = findCategory(categories);
+
+      if (cachedCategory) {
+        return cachedCategory;
+      }
+
+      const latestCategories = await fetchCategories();
+      setCategories(latestCategories);
+
+      const fetchedCategory = findCategory(latestCategories);
+
+      if (fetchedCategory) {
+        return fetchedCategory;
+      }
+
+      // TODO [BACKEND]: A categoria padrão deve existir via seed/migração.
+      // O fallback abaixo evita bloquear o pagamento caso a carga inicial
+      // ainda não tenha sido executada.
+      const createdCategory = await createCategory({
+        name: FIXED_EXPENSE_CATEGORY,
+        color: FIXED_EXPENSE_CATEGORY_COLOR,
+      });
+
+      setCategories((currentCategories) =>
+        currentCategories.some(
+          (category) => category.id === createdCategory.id,
+        )
+          ? currentCategories
+          : [...currentCategories, createdCategory],
+      );
+
+      return createdCategory;
+    }, [categories]);
+
   const handleSubmitPayment = useCallback(
     async (input: FixedExpensePaymentInput) => {
       if (!payingExpense) {
@@ -244,18 +347,62 @@ function FixedExpenses() {
         throw new Error("Este gasto fixo já foi pago no mês atual.");
       }
 
+      const fixedExpenseCategory = await resolveFixedExpenseCategory();
+      const paymentDate = getTodayISO();
+
+      /*
+       * Cada pagamento de gasto fixo também é uma despesa real da conta
+       * utilizada. `POST /transactions` salva a movimentação, o comprovante e
+       * atualiza o saldo no servidor dentro da mesma transação.
+       *
+       * TODO [BACKEND]: Unificar as operações no endpoint dedicado
+       * `POST /api/fixed-expenses/:id/payments`, criando na mesma transação
+       * SQL:
+       * 1. o registro em `fixed_expense_payments`;
+       * 2. a movimentação de despesa em `movimentacao`;
+       * 3. o débito em `conta_financeira.saldo_atual`;
+       * 4. o comprovante em BYTEA;
+       * 5. o vínculo `fixed_expense_payments.transaction_id`.
+       */
+      const transaction = await createTransaction(selectedAccount.id, {
+        title: payingExpense.title,
+        description: `Pagamento mensal do gasto fixo "${payingExpense.title}".`,
+        amount: payingExpense.estimatedAmount,
+        type: "expense",
+        categoryId: fixedExpenseCategory.id,
+        date: paymentDate,
+        receiptFile: input.receiptFile ?? undefined,
+      });
+
       const payment: FixedExpensePayment = {
         id: createId("fixed-expense-payment"),
-        paidAt: getTodayISO(),
-        amount: payingExpense.estimatedAmount,
+        transactionId: transaction.id,
+        paidAt: transaction.date || paymentDate,
+        amount: transaction.amount,
         accountId: selectedAccount.id,
         accountName: selectedAccount.name,
         receiptName: input.receiptFile?.name ?? null,
       };
 
-      // TODO [BACKEND]: Persistir pagamento e debitar saldo da conta
-      // selecionada via API. O envio do comprovante deve usar
-      // multipart/form-data e o servidor deve validar MIME type e tamanho.
+      // O saldo exibido é atualizado de forma otimista para refletir o débito
+      // imediatamente; em seguida `GET /accounts` confirma o valor do servidor.
+      const optimisticBalance = roundCurrency(
+        selectedAccount.balance - payment.amount,
+      );
+
+      setAccounts((currentAccounts) =>
+        currentAccounts.map((account) =>
+          account.id === selectedAccount.id
+            ? { ...account, balance: optimisticBalance }
+            : account,
+        ),
+      );
+      setLastPayment({
+        accountId: selectedAccount.id,
+        amount: payment.amount,
+        title: payingExpense.title,
+      });
+
       setExpenses((currentExpenses) =>
         currentExpenses.map((expense) =>
           expense.id === payingExpense.id
@@ -264,12 +411,35 @@ function FixedExpenses() {
         ),
       );
 
-      setFeedback(
-        `Pagamento de ${formatCurrency(payment.amount)} registrado na conta ${selectedAccount.name}.`,
-      );
       setPayingExpense(null);
+
+      let updatedBalance = optimisticBalance;
+
+      try {
+        const refreshedAccounts = await fetchAccounts();
+        setAccounts(refreshedAccounts);
+
+        const refreshedAccount = refreshedAccounts.find(
+          (account) => account.id === selectedAccount.id,
+        );
+
+        if (refreshedAccount) {
+          updatedBalance = refreshedAccount.balance;
+        }
+      } catch (error) {
+        // A movimentação já foi criada e debitada no servidor. Mantemos o
+        // valor otimista até a próxima atualização da lista de contas.
+        console.error(
+          "Pagamento registrado, mas não foi possível recarregar o saldo:",
+          error,
+        );
+      }
+
+      setFeedback(
+        `Pagamento de ${formatCurrency(payment.amount)} registrado em Movimentações e debitado da conta ${selectedAccount.name}. Saldo atual: ${formatCurrency(updatedBalance)}.`,
+      );
     },
-    [accounts, payingExpense],
+    [accounts, payingExpense, resolveFixedExpenseCategory],
   );
 
   const handleOpenHistory = useCallback((expense: FixedExpense) => {
@@ -464,7 +634,12 @@ function FixedExpenses() {
         )}
 
         {!isLoadingAccounts && !accountsError && hasAccounts && (
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col gap-4">
+            <FixedExpensesAccountBalances
+              accounts={accounts}
+              lastPayment={lastPayment}
+            />
+
             <FixedExpensesTable
               expenses={sortedExpenses}
               onEdit={handleOpenEditExpense}

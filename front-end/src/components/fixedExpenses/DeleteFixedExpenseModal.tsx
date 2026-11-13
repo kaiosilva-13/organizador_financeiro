@@ -53,10 +53,17 @@ function DeleteFixedExpenseModal({
             className="mt-0.5 shrink-0 text-[#4F26E9]"
           />
 
-          <p className="text-xs leading-relaxed text-indigo-900">
-            Quer apenas deixar de pagar? Cancele e altere o status para Não
-            Ativo. Assim, seu histórico de pagamentos será preservado.
-          </p>
+          <div className="space-y-1.5 text-xs leading-relaxed text-indigo-900">
+            <p>
+              Quer apenas deixar de pagar? Cancele e altere o status para Não
+              Ativo. Assim, seu histórico de pagamentos será preservado.
+            </p>
+            <p>
+              As despesas já lançadas permanecem em{" "}
+              <strong>Movimentações</strong> e continuam debitadas das contas
+              utilizadas, pois representam pagamentos reais.
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

@@ -12,6 +12,9 @@ import type {
  */
 export const FIXED_EXPENSE_CATEGORY = "Gastos Fixos";
 
+/** Cor usada caso a categoria padrão precise ser criada pelo front-end. */
+export const FIXED_EXPENSE_CATEGORY_COLOR = "#030862";
+
 /**
  * Chave usada para manter os gastos fixos no navegador durante o
  * desenvolvimento do front-end.
@@ -122,6 +125,12 @@ function normalizePayment(value: unknown): FixedExpensePayment | null {
 
   return {
     id: payment.id,
+    // Pagamentos antigos, anteriores à integração com movimentações, não
+    // possuem vínculo com a tabela `movimentacao`.
+    transactionId:
+      typeof payment.transactionId === "string"
+        ? payment.transactionId
+        : null,
     paidAt: payment.paidAt,
     amount: Number.isFinite(amount) ? amount : 0,
     accountId: String(payment.accountId ?? ""),
