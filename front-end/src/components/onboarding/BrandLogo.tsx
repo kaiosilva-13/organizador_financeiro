@@ -1,4 +1,4 @@
-import logoImg from "../../assets/logo_projeto.png";
+import logoImg from "../../assets/logo_projeto_icone.png";
 
 type BrandLogoProps = {
   className?: string;
@@ -11,16 +11,16 @@ function BrandLogo({ className = "", onNavigate }: BrandLogoProps) {
       href="#inicio"
       onClick={onNavigate}
       aria-label="Organizaê — voltar ao início"
-      className={`inline-flex items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:outline-none ${className}`}
+      className={`inline-flex items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:outline-none ${className}`}
     >
       <img
         src={logoImg}
         alt="Logotipo do Organizaê, com gráfico de barras em ascensão"
-        className="h-11 w-11 shrink-0 select-none object-contain"
+        className="h-9 w-9 shrink-0 select-none object-contain"
         draggable={false}
       />
 
-      <span className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+      <span className="text-2xl font-bold tracking-tight text-white">
         Organizaê
       </span>
     </a>

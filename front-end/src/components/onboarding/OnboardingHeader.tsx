@@ -33,9 +33,11 @@ function OnboardingHeader() {
   }
 
   return (
-    <header className="bg-brand-950">
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-        <BrandLogo onNavigate={closeMenu} />
+    <header className="bg-brand-950 px-6 md:px-12 3xl:px-20">
+      <div className="mx-auto flex h-20 w-full max-w-[1280px] items-center 3xl:h-[88px]">
+        <div className="flex flex-1 items-center">
+          <BrandLogo onNavigate={closeMenu} />
+        </div>
 
         <nav aria-label="Navegação principal" className="hidden md:block">
           <ul className="flex items-center gap-8">
@@ -49,22 +51,26 @@ function OnboardingHeader() {
           </ul>
         </nav>
 
-        <button
-          type="button"
-          onClick={() => setIsMenuOpen((open) => !open)}
-          aria-expanded={isMenuOpen}
-          aria-controls="onboarding-mobile-menu"
-          aria-label={
-            isMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"
-          }
-          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-indigo-100 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none md:hidden"
-        >
-          {isMenuOpen ? (
-            <X size={22} aria-hidden="true" />
-          ) : (
-            <Menu size={22} aria-hidden="true" />
-          )}
-        </button>
+        <div className="flex flex-1 items-center justify-end md:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-expanded={isMenuOpen}
+            aria-controls="onboarding-mobile-menu"
+            aria-label={
+              isMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"
+            }
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-indigo-100 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none"
+          >
+            {isMenuOpen ? (
+              <X size={22} aria-hidden="true" />
+            ) : (
+              <Menu size={22} aria-hidden="true" />
+            )}
+          </button>
+        </div>
+
+        <div aria-hidden="true" className="hidden flex-1 md:block" />
       </div>
 
       {isMenuOpen && (
@@ -73,7 +79,7 @@ function OnboardingHeader() {
           aria-label="Navegação principal no celular"
           className="md:hidden"
         >
-          <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4 sm:px-6">
+          <ul className="mx-auto flex max-w-[1280px] flex-col gap-1 pb-4">
             {ONBOARDING_NAV_ITEMS.map((item) => (
               <li key={item.sectionId}>
                 <a

@@ -3,16 +3,10 @@ import { ONBOARDING_NAV_ITEMS } from "./navigation";
 
 function OnboardingFooter() {
   return (
-    <footer className="bg-[#08043B]">
-      <div className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-6 lg:px-8">
+    <footer className="flex items-center bg-[#08043B] px-6 py-12 md:px-12 3xl:min-h-[264px] 3xl:px-20 3xl:py-12">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[28px]">
         <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
-          <div>
-            <BrandLogo />
-
-            <p className="mt-3 pl-1 text-sm text-indigo-200/70">
-              Seu dinheiro, em ordem.
-            </p>
-          </div>
+          <BrandLogo />
 
           <nav aria-label="Navegação do rodapé">
             <ul className="flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -30,9 +24,15 @@ function OnboardingFooter() {
           </nav>
         </div>
 
-        <p className="mt-10 text-right text-xs text-indigo-200/70">
-          © 2026 Organizaê. Todos os direitos reservados.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-indigo-200/70">
+            Seu dinheiro, em ordem.
+          </p>
+
+          <p className="text-xs text-indigo-200/70">
+            © 2026 Organizaê. Todos os direitos reservados.
+          </p>
+        </div>
       </div>
     </footer>
   );
