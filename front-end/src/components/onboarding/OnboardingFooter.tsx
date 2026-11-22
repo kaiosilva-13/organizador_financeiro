@@ -3,7 +3,7 @@ import { ONBOARDING_NAV_ITEMS } from "./navigation";
 
 function OnboardingFooter() {
   return (
-    <footer className="border-t border-white/10 bg-brand-950">
+    <footer className="bg-[#08043B]">
       <div className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
           <div>
@@ -20,7 +20,7 @@ function OnboardingFooter() {
                 <li key={item.sectionId}>
                   <a
                     href={`#${item.sectionId}`}
-                    className="rounded-md px-1 py-2 text-sm font-medium text-indigo-100/80 transition hover:text-white focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-4 focus-visible:ring-offset-brand-950 focus-visible:outline-none"
+                    className="rounded-md px-1 py-2 text-sm font-medium text-indigo-100/80 transition hover:text-white focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:outline-none"
                   >
                     {item.label}
                   </a>
@@ -30,11 +30,9 @@ function OnboardingFooter() {
           </nav>
         </div>
 
-        <div className="mt-10 border-t border-white/10 pt-6">
-          <p className="text-xs text-indigo-200/70">
-            © 2026 Organizaê. Todos os direitos reservados.
-          </p>
-        </div>
+        <p className="mt-10 text-right text-xs text-indigo-200/70">
+          © 2026 Organizaê. Todos os direitos reservados.
+        </p>
       </div>
     </footer>
   );

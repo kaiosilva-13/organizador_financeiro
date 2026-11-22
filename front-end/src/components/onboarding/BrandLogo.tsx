@@ -11,7 +11,7 @@ function BrandLogo({ className = "", onNavigate }: BrandLogoProps) {
       href="#inicio"
       onClick={onNavigate}
       aria-label="Organizaê — voltar ao início"
-      className={`inline-flex items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none ${className}`}
+      className={`inline-flex items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:outline-none ${className}`}
     >
       <img
         src={logoImg}
