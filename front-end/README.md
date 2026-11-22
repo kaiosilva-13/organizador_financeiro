@@ -8,29 +8,41 @@ Aplicação web do Organizaê, organizador financeiro pessoal. Interface desenvo
 src/
 ├── assets/                     # Imagens estáticas (logo do projeto)
 ├── components/
-│   └── auth/                   # Componentes reutilizáveis das telas de autenticação
-│       ├── AuthLayout.tsx      # Layout em 2 colunas (banner + formulário)
-│       ├── HeroBanner.tsx      # Painel de branding, configurável via props
-│       ├── Input.tsx           # Campo de formulário com label, erro e toggle de senha
-│       ├── Button.tsx          # Botão com variantes "primary" e "outline"
-│       └── GoogleIcon.tsx      # Ícone social do Google
+│   ├── auth/                   # Componentes reutilizáveis das telas de autenticação
+│   │   ├── AuthLayout.tsx      # Layout em 2 colunas (banner + formulário)
+│   │   ├── HeroBanner.tsx      # Painel de branding, configurável via props
+│   │   ├── Input.tsx           # Campo de formulário com label, erro e toggle de senha
+│   │   ├── Button.tsx          # Botão com variantes "primary" e "outline"
+│   │   └── GoogleIcon.tsx      # Ícone social do Google
+│   └── onboarding/             # Componentes da página inicial (boas-vindas)
+│       ├── OnboardingHeader.tsx
+│       ├── HeroSection.tsx
+│       ├── FeaturesSection.tsx
+│       ├── FinalCtaSection.tsx
+│       ├── OnboardingFooter.tsx
+│       ├── BrandLogo.tsx
+│       ├── ActionLink.tsx
+│       └── navigation.ts       # Itens de navegação compartilhados (header/footer)
 ├── pages/
+│   ├── Onboarding.tsx          # Tela inicial de boas-vindas (/)
 │   ├── Login.tsx               # Tela de login (/login)
 │   └── Register.tsx            # Tela de cadastro (/cadastro)
 ├── App.tsx                     # Configuração das rotas (react-router-dom)
-├── index.css                   # Tema Tailwind (cores da marca)
+├── index.css                   # Tema Tailwind (cores da marca e rolagem suave)
 └── main.tsx                    # Ponto de entrada da aplicação
 ```
+
+As imagens da página inicial ficam em `imagens-onboarding/` (`imagem1.jpg`, `imagem2.jpg` e `imagem3.jpg`).
 
 ## Rotas
 
 | Rota        | Tela                                        |
 | ----------- | ------------------------------------------- |
-| `/`         | Redireciona para `/login`                   |
+| `/`         | Onboarding — boas-vindas e apresentação     |
 | `/login`    | Autenticação (e-mail/senha e Google)        |
 | `/cadastro` | Criação de conta (e-mail, senha e Google)   |
 
-A navegação entre as telas é feita pelos links "Registre-se" (login → cadastro) e "Entrar" (cadastro → login).
+A tela inicial é o primeiro acesso da aplicação. Os botões "Começar agora" e "Criar minha conta" levam ao cadastro, enquanto "Já tenho conta" leva ao login. A navegação entre login e cadastro continua disponível pelos links "Registre-se" e "Entrar".
 
 ## Screenshots
 
