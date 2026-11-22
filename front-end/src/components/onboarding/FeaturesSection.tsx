@@ -42,7 +42,7 @@ function FeaturesSection() {
 
           <img
             src={featuresImage}
-            alt="Documentos financeiros, calculadora e caneta organizados sobre uma mesa, representando o controle dos gastos mensais"
+            alt="Formulário de imposto de renda, calculadora e caneta organizados sobre uma mesa escura, representando o controle dos gastos mensais"
             loading="lazy"
             decoding="async"
             className="relative aspect-[4/5] w-full rounded-[1.75rem] object-cover shadow-xl shadow-slate-900/10"

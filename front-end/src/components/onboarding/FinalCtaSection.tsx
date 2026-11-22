@@ -66,7 +66,7 @@ function FinalCtaSection() {
           <figure className="relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/5 p-2 shadow-2xl shadow-black/40">
             <img
               src={ctaImage}
-              alt="Pessoa organizando documentos financeiros e usando uma calculadora para planejar o orçamento"
+              alt="Pessoa revisando documentos financeiros e usando uma calculadora para planejar o orçamento sobre uma mesa clara"
               loading="lazy"
               decoding="async"
               className="aspect-[4/3] w-full rounded-[1.35rem] object-cover"
