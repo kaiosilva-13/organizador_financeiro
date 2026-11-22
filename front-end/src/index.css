@@ -16,6 +16,14 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 
   body {
@@ -33,5 +41,21 @@
 
   #root {
     min-height: 100svh;
+  }
+}
+
+@layer utilities {
+  /* Grade sutil usada como textura nas seções escuras da página inicial. */
+  .onboarding-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.055) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      black 20%,
+      transparent 75%
+    );
+    mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
   }
 }
