@@ -11,6 +11,27 @@ import {
 
 const heroTextContainer = createStaggerContainer(0.09);
 
+function HeroActionLinks() {
+  return (
+    <>
+      <ActionLink
+        to="/cadastro"
+        className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
+      >
+        Começar agora
+      </ActionLink>
+
+      <ActionLink
+        to="/login"
+        variant="secondary"
+        className="w-full active:scale-95 sm:w-auto"
+      >
+        Já tenho conta
+      </ActionLink>
+    </>
+  );
+}
+
 function HeroSection() {
   return (
     <section
@@ -51,22 +72,9 @@ function HeroSection() {
 
             <motion.div
               variants={fadeUpItem}
-              className="flex flex-col gap-4 sm:flex-row sm:items-center"
+              className="hidden flex-col gap-4 sm:flex-row sm:items-center lg:flex"
             >
-              <ActionLink
-                to="/cadastro"
-                className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
-              >
-                Começar agora
-              </ActionLink>
-
-              <ActionLink
-                to="/login"
-                variant="secondary"
-                className="w-full active:scale-95 sm:w-auto"
-              >
-                Já tenho conta
-              </ActionLink>
+              <HeroActionLinks />
             </motion.div>
 
             <motion.p
@@ -77,16 +85,27 @@ function HeroSection() {
             </motion.p>
           </motion.div>
 
-          <motion.img
-            variants={imageReveal}
-            initial="hidden"
-            animate="visible"
-            src={heroImage}
-            alt="Duas pessoas planejando as finanças juntas em um escritório, com notebooks abertos sobre a mesa"
-            loading="eager"
-            fetchPriority="high"
-            className="mx-auto aspect-[3/2] w-full max-w-xl rounded-2xl object-cover lg:max-w-[632px] 3xl:w-[632px]"
-          />
+          <div className="flex flex-col gap-6 lg:contents">
+            <motion.img
+              variants={imageReveal}
+              initial="hidden"
+              animate="visible"
+              src={heroImage}
+              alt="Duas pessoas planejando as finanças juntas em um escritório, com notebooks abertos sobre a mesa"
+              loading="eager"
+              fetchPriority="high"
+              className="mx-auto aspect-[3/2] w-full max-w-xl rounded-2xl object-cover lg:max-w-[632px] 3xl:w-[632px]"
+            />
+
+            <motion.div
+              variants={fadeUpItem}
+              initial="hidden"
+              animate="visible"
+              className="flex flex-col gap-4 sm:flex-row sm:items-center lg:hidden"
+            >
+              <HeroActionLinks />
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -11,6 +11,28 @@ import {
 
 const finalCtaContainer = createStaggerContainer(0.09);
 
+function FinalCtaActionLinks() {
+  return (
+    <>
+      <ActionLink
+        to="/cadastro"
+        primaryTextColorClassName="text-[#08043B]"
+        className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
+      >
+        Criar minha conta
+      </ActionLink>
+
+      <ActionLink
+        to="/login"
+        variant="secondary"
+        className="w-full active:scale-95 sm:w-auto"
+      >
+        Já tenho conta
+      </ActionLink>
+    </>
+  );
+}
+
 function FinalCtaSection() {
   return (
     <section
@@ -53,37 +75,35 @@ function FinalCtaSection() {
 
             <motion.div
               variants={fadeUpItem}
-              className="flex flex-col gap-6 sm:flex-row sm:items-center"
+              className="hidden flex-col gap-6 sm:flex-row sm:items-center lg:flex"
             >
-              <ActionLink
-                to="/cadastro"
-                primaryTextColorClassName="text-[#08043B]"
-                className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
-              >
-                Criar minha conta
-              </ActionLink>
-
-              <ActionLink
-                to="/login"
-                variant="secondary"
-                className="w-full active:scale-95 sm:w-auto"
-              >
-                Já tenho conta
-              </ActionLink>
+              <FinalCtaActionLinks />
             </motion.div>
           </motion.div>
 
-          <motion.img
-            variants={softImageReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            src={ctaImage}
-            alt="Pessoa revisando documentos financeiros e usando uma calculadora para planejar o orçamento sobre uma mesa clara"
-            loading="lazy"
-            decoding="async"
-            className="mx-auto aspect-[1800/1033] w-full max-w-xl rounded-2xl object-cover lg:max-w-[600px] 3xl:w-[600px]"
-          />
+          <div className="flex flex-col gap-6 lg:contents">
+            <motion.img
+              variants={softImageReveal}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              src={ctaImage}
+              alt="Pessoa revisando documentos financeiros e usando uma calculadora para planejar o orçamento sobre uma mesa clara"
+              loading="lazy"
+              decoding="async"
+              className="mx-auto aspect-[1800/1033] w-full max-w-xl rounded-2xl object-cover lg:max-w-[600px] 3xl:w-[600px]"
+            />
+
+            <motion.div
+              variants={fadeUpItem}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              className="flex flex-col gap-6 sm:flex-row sm:items-center lg:hidden"
+            >
+              <FinalCtaActionLinks />
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>
