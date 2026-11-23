@@ -1,4 +1,12 @@
+import { motion } from "framer-motion";
+
 import featuresImage from "../../../imagens-onboarding/imagem2.jpg";
+
+import {
+  createStaggerContainer,
+  slideFromLeft,
+  slideFromRight,
+} from "./animations";
 
 type Feature = {
   number: string;
@@ -26,6 +34,8 @@ const FEATURES: Feature[] = [
   },
 ];
 
+const featuresListContainer = createStaggerContainer(0.12);
+
 function FeaturesSection() {
   return (
     <section
@@ -35,7 +45,11 @@ function FeaturesSection() {
     >
       <div className="mx-auto w-full max-w-[1200px]">
         <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-12 3xl:grid-cols-[minmax(0,400px)_minmax(0,696px)] 3xl:gap-[104px]">
-          <img
+          <motion.img
+            variants={slideFromLeft}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
             src={featuresImage}
             alt="Formulário de imposto de renda, calculadora e caneta organizados sobre uma mesa escura, representando o controle dos gastos mensais"
             loading="lazy"
@@ -60,9 +74,15 @@ function FeaturesSection() {
               sua vida financeira.
             </p>
 
-            <ol className="space-y-5">
+            <motion.ol
+              variants={featuresListContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              className="space-y-5"
+            >
               {FEATURES.map((feature) => (
-                <li key={feature.number}>
+                <motion.li key={feature.number} variants={slideFromRight}>
                   <div className="flex gap-5 sm:gap-7">
                     <span
                       aria-hidden="true"
@@ -81,9 +101,9 @@ function FeaturesSection() {
                       </p>
                     </div>
                   </div>
-                </li>
+                </motion.li>
               ))}
-            </ol>
+            </motion.ol>
           </div>
         </div>
       </div>
