@@ -58,7 +58,7 @@ function FinalCtaSection() {
               <ActionLink
                 to="/cadastro"
                 primaryTextColorClassName="text-[#08043B]"
-                className="w-full sm:w-auto"
+                className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
               >
                 Criar minha conta
               </ActionLink>
@@ -66,7 +66,7 @@ function FinalCtaSection() {
               <ActionLink
                 to="/login"
                 variant="secondary"
-                className="w-full sm:w-auto"
+                className="w-full active:scale-95 sm:w-auto"
               >
                 Já tenho conta
               </ActionLink>

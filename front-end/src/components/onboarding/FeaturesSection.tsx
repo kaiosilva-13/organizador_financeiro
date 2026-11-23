@@ -82,11 +82,15 @@ function FeaturesSection() {
               className="space-y-5"
             >
               {FEATURES.map((feature) => (
-                <motion.li key={feature.number} variants={slideFromRight}>
-                  <div className="flex gap-5 sm:gap-7">
+                <motion.li
+                  key={feature.number}
+                  variants={slideFromRight}
+                  className="group"
+                >
+                  <div className="flex gap-5 transition-transform duration-300 hover:translate-x-1 sm:gap-7">
                     <span
                       aria-hidden="true"
-                      className="shrink-0 text-sm font-bold tracking-[0.18em] whitespace-nowrap text-brand-600 sm:text-base"
+                      className="shrink-0 text-sm font-bold tracking-[0.18em] whitespace-nowrap text-brand-600 transition-colors group-hover:text-[#5227ED] sm:text-base"
                     >
                       {feature.number}
                     </span>

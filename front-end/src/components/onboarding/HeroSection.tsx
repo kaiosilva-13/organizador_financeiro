@@ -53,14 +53,17 @@ function HeroSection() {
               variants={fadeUpItem}
               className="flex flex-col gap-4 sm:flex-row sm:items-center"
             >
-              <ActionLink to="/cadastro" className="w-full sm:w-auto">
+              <ActionLink
+                to="/cadastro"
+                className="w-full hover:-translate-y-0.5 active:scale-95 sm:w-auto"
+              >
                 Começar agora
               </ActionLink>
 
               <ActionLink
                 to="/login"
                 variant="secondary"
-                className="w-full sm:w-auto"
+                className="w-full active:scale-95 sm:w-auto"
               >
                 Já tenho conta
               </ActionLink>
