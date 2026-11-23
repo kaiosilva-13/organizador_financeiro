@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
+import Onboarding from "./pages/Onboarding";
 import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import VerifyCode from "./pages/VerifyCode";
@@ -85,7 +86,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movimentacoes" element={<Transactions />} />
