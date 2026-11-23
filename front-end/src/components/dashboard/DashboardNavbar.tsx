@@ -28,6 +28,7 @@ function DashboardNavbar({
 }: DashboardNavbarProps) {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const initial = userName.charAt(0).toUpperCase();
 
   function handleNavigate(item: DashboardNavItem) {
@@ -36,6 +37,11 @@ function DashboardNavbar({
     }
 
     onNavigate?.(item.key);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -97,13 +103,29 @@ function DashboardNavbar({
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#635BFF]" />
           </button>
 
-          <button
-            type="button"
-            aria-label={`Perfil de ${userName}`}
-            className="ml-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#4F26E9] text-sm font-bold text-white transition hover:bg-[#411DCB]"
-          >
-            {initial}
-          </button>
+          <div className="relative ml-1">
+            <button
+              type="button"
+              aria-label={`Perfil de ${userName}`}
+              aria-expanded={isProfileMenuOpen}
+              onClick={() => setIsProfileMenuOpen((open) => !open)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4F26E9] text-sm font-bold text-white transition hover:bg-[#411DCB]"
+            >
+              {initial}
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 z-40 mt-2 w-40 overflow-hidden rounded-lg border border-white/10 bg-[#0B085C] py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full px-4 py-2 text-left text-sm font-medium text-indigo-100/80 transition hover:bg-white/10 hover:text-white"
+                >
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
