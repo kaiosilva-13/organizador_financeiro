@@ -6,7 +6,7 @@ import BrandLogo from "./BrandLogo";
 import { ONBOARDING_NAV_ITEMS } from "./navigation";
 
 const desktopLinkClasses =
-  "rounded-md px-1 py-2 text-sm font-medium text-indigo-100/85 transition hover:text-white focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none";
+  "relative rounded-md px-1 py-2 text-sm font-medium text-indigo-100/85 transition after:absolute after:inset-x-1 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:rounded-full after:bg-current after:transition-transform after:duration-300 after:content-[''] hover:text-white hover:after:scale-x-100 focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none";
 
 const mobileLinkClasses =
   "block rounded-lg px-3 py-3 text-base font-medium text-indigo-100/90 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#8A85D6] focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950 focus-visible:outline-none";
