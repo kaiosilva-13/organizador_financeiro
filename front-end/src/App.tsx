@@ -14,7 +14,7 @@ import Transactions from "./pages/Transactions";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminSystemReport from "./pages/admin/AdminSystemReport";
 import AdminUsers from "./pages/admin/AdminUsers";
-import { API_URL } from "./lib/api";
+import { API_URL } from "./services/api";
 
 type AdminAccessStatus = "checking" | "admin" | "user" | "anonymous";
 
