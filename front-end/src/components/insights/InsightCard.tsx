@@ -2,6 +2,7 @@ import { Eye } from "lucide-react";
 
 import logoIcon from "../../assets/logo_projeto_icone.png";
 import type { FinancialInsight } from "../../data/financialInsights";
+import InsightDecor from "./InsightDecor";
 
 type InsightCardProps = {
   insight: FinancialInsight;
@@ -33,43 +34,48 @@ function InsightCard({ insight, onOpen }: InsightCardProps) {
           onOpen(insight);
         }
       }}
-      className="group relative flex min-h-[190px] cursor-pointer flex-col overflow-hidden rounded-2xl bg-[#4F26E9] p-6 text-white shadow-lg shadow-slate-900/10 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F26E9]"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${insight.colorFrom} 0%, ${insight.colorTo} 100%)`,
+      }}
+      className="group relative flex min-h-[200px] cursor-pointer flex-col overflow-hidden rounded-2xl p-5 text-white shadow-lg shadow-slate-900/10 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F26E9]"
     >
-      <div className="flex items-center justify-between gap-3">
-        <img
-          src={logoIcon}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="h-5 w-5 shrink-0 select-none object-contain"
-        />
+      <InsightDecor insightId={insight.id} />
 
-        <span className="text-[11px] font-medium tracking-wide text-white/70 tabular-nums">
-          {formattedId} / 20
-        </span>
+      <div className="relative z-10 flex flex-col pb-8">
+        <div className="flex items-center justify-between gap-3">
+          <img
+            src={logoIcon}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="h-5 w-5 shrink-0 select-none object-contain"
+          />
+
+          <span className="text-[11px] font-medium tracking-wide text-white/70 tabular-nums">
+            {formattedId} / 20
+          </span>
+        </div>
+
+        <h3 className="mt-4 text-[17px] leading-snug font-bold tracking-tight">
+          {insight.title}
+        </h3>
+
+        <p className="mt-2 text-[12.5px] leading-[1.5] text-white/80">
+          {insight.summary}
+        </p>
       </div>
 
-      <h3 className="mt-5 text-[17px] leading-snug font-bold tracking-tight">
-        {insight.title}
-      </h3>
-
-      <p className="mt-2 text-[13px] leading-relaxed text-white/80">
-        {insight.summary}
-      </p>
-
-      <div className="mt-auto flex justify-end pt-4">
-        <button
-          type="button"
-          aria-label={`Ver detalhes do insight ${formattedId}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpen(insight);
-          }}
-          className="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        >
-          <Eye size={17} aria-hidden="true" />
-        </button>
-      </div>
+      <button
+        type="button"
+        aria-label={`Ver detalhes do insight ${formattedId}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen(insight);
+        }}
+        className="absolute right-2.5 bottom-2.5 z-10 rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        <Eye size={17} aria-hidden="true" />
+      </button>
     </article>
   );
 }

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 
 import logoIcon from "../../assets/logo_projeto_icone.png";
 import type { FinancialInsight } from "../../data/financialInsights";
+import InsightDecor from "./InsightDecor";
 
 type InsightDetailModalProps = {
   insight: FinancialInsight | null;
@@ -20,7 +21,7 @@ type InsightDetailModalProps = {
  */
 function InsightDetailModal({ insight, onClose }: InsightDetailModalProps) {
   const titleId = useId();
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
 
   useEffect(() => {
@@ -39,7 +40,7 @@ function InsightDetailModal({ insight, onClose }: InsightDetailModalProps) {
     const previousBodyOverflow = document.body.style.overflow;
 
     document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
+    dialogRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -71,12 +72,19 @@ function InsightDetailModal({ insight, onClose }: InsightDetailModalProps) {
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative w-full max-w-[460px] overflow-hidden rounded-2xl bg-[#4F26E9] text-white shadow-2xl"
+        tabIndex={-1}
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${insight.colorFrom} 0%, ${insight.colorTo} 100%)`,
+        }}
+        className="relative w-full max-w-[460px] overflow-hidden rounded-2xl text-white shadow-2xl focus:outline-none"
       >
-        <div className="max-h-[calc(100svh-2rem)] overflow-y-auto p-6 sm:p-7">
+        <InsightDecor insightId={insight.id} />
+
+        <div className="relative z-10 max-h-[calc(100svh-2rem)] overflow-y-auto p-6 sm:p-7">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <img
@@ -93,11 +101,10 @@ function InsightDetailModal({ insight, onClose }: InsightDetailModalProps) {
             </div>
 
             <button
-              ref={closeButtonRef}
               type="button"
               onClick={onClose}
               aria-label="Fechar detalhes do insight"
-              className="-mt-1.5 -mr-1.5 rounded-full bg-white/15 p-2 text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="-mt-1.5 -mr-1.5 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <X size={18} aria-hidden="true" />
             </button>

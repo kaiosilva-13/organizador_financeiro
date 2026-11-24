@@ -68,13 +68,13 @@ function FinancialInsights() {
         userName={userName}
       />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <header>
           <h1 className="text-3xl font-bold tracking-tight text-[#0B0B45]">
             Insights Financeiros
           </h1>
 
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+          <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-slate-500">
             Explore conceitos essenciais de educação financeira para tomar
             decisões mais inteligentes com o seu dinheiro.
           </p>
@@ -94,7 +94,7 @@ function FinancialInsights() {
             </p>
           </div>
 
-          <div className="mt-4 lg:min-h-[400px]">
+          <div className="mt-4 lg:min-h-[416px]">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {visibleInsights.map((insight) => (
                 <InsightCard
