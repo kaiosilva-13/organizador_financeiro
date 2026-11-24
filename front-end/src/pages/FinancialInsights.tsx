@@ -4,9 +4,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import InsightCard from "../components/insights/InsightCard";
+import InsightDetailModal from "../components/insights/InsightDetailModal";
 import {
   FINANCIAL_INSIGHTS,
   FINANCIAL_INSIGHTS_PER_PAGE,
+  type FinancialInsight,
 } from "../data/financialInsights";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
@@ -32,6 +34,8 @@ function formatDisplayNumber(value: number) {
 function FinancialInsights() {
   const userName = useAuthenticatedUser();
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedInsight, setSelectedInsight] =
+    useState<FinancialInsight | null>(null);
   const catalogRef = useRef<HTMLElement | null>(null);
 
   const pageStart = (currentPage - 1) * FINANCIAL_INSIGHTS_PER_PAGE;
@@ -96,7 +100,7 @@ function FinancialInsights() {
                 <InsightCard
                   key={insight.id}
                   insight={insight}
-                  onOpen={() => undefined}
+                  onOpen={setSelectedInsight}
                 />
               ))}
             </div>
@@ -149,6 +153,11 @@ function FinancialInsights() {
           </nav>
         </section>
       </main>
+
+      <InsightDetailModal
+        insight={selectedInsight}
+        onClose={() => setSelectedInsight(null)}
+      />
     </div>
   );
 }
