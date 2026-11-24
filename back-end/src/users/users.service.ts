@@ -15,6 +15,29 @@ export class UsersService {
       where: { email },
     });
   }
+  async updateResetToken(id: number, resetToken: string, resetTokenExpires: Date) {
+    return this.repository.update(id, {
+      resetToken,
+      resetTokenExpires,
+    });
+  }
+
+
+  async findForPasswordReset(email: string) {
+    return this.repository.findOne({
+      where: { email },
+      select: ['id', 'email', 'senhaHash', 'resetToken', 'resetTokenExpires'],
+    });
+  }
+
+
+  async updatePasswordAndClearToken(id: number, senhaHash: string) {
+    return this.repository.update(id, {
+      senhaHash,
+      resetToken: null,
+      resetTokenExpires: null,
+    });
+  }
 
   findById(id: number) {
     return this.repository.findOne({

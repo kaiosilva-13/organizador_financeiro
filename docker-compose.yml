@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # 1. Base de Dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: organizador_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: organizador_financeiro
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - organizador-network
+
+  # 2. Servidor de Teste de E-mails (Mailpit)
+  mailpit:
+    image: axllent/mailpit
+    container_name: organizador_mailpit
+    ports:
+      - "1025:1025" 
+      - "8025:8025" 
+    networks:
+      - organizador-network
+
+  # 3. Back-end em NestJS
+  api:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: organizador_api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=rootpassword
+      - DATABASE_NAME=organizador_financeiro
+      - JWT_SECRET=tua_chave_jwt_secreta_aqui
+      - MAIL_HOST=mailpit        
+      - MAIL_PORT=1025            
+      - MAIL_USER=               
+      - MAIL_PASS=
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-id_falso_para_teste}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-segredo_falso_para_teste}
+      - GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback               
+    depends_on:
+      - postgres
+      - mailpit
+    networks:
+      - organizador-network
+
+
+volumes:
+  pgdata:
+
+
+networks:
+  organizador-network:
+    driver: bridge

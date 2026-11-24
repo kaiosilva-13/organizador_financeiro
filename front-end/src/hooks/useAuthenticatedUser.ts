@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { API_URL } from "../lib/api";
+import { API_URL } from '../services/api';
 
 /**
  * Carrega o nome do usuário autenticado para o cabeçalho das páginas internas.

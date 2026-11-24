@@ -4,7 +4,7 @@ import type {
   FixedExpenseHistoryFilters,
   FixedExpensePayment,
 } from "../types/fixedExpense";
-import { API_URL } from "./api";
+import { API_URL } from '../services/api';
 
 /**
  * Chamadas do módulo de Gastos Fixos ao back-end (todas autenticadas).

@@ -41,7 +41,7 @@ export class AuthController {
   async googleCallback(@Req() req: any, @Res() res: Response) {
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:5173';
+      'https://organizae-ifcn.vercel.app';
 
     const token = await this.authService.validateGoogleUser(req.user);
 
@@ -50,6 +50,19 @@ export class AuthController {
         token.access_token,
       )}`,
     );
+  }
+  @Post('reset-password')
+  async resetPassword(@Body() body: { email: string; code: string; novaSenha: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.novaSenha);
+  }
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('verify-code')
+  async verifyCode(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyCode(body.email, body.code);
   }
 
 
