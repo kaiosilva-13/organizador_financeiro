@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import ctaImage from "../../../imagens-onboarding/imagem3.jpg";
+import ctaImage from "../../assets/onboarding/cta.jpg";
 
 import ActionLink from "./ActionLink";
 import {

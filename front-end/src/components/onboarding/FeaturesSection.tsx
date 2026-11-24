@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import featuresImage from "../../../imagens-onboarding/imagem2.jpg";
+import featuresImage from "../../assets/onboarding/features.jpg";
 
 import {
   createStaggerContainer,

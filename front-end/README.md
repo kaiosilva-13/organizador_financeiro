@@ -32,7 +32,7 @@ src/
 └── main.tsx                    # Ponto de entrada da aplicação
 ```
 
-As imagens da página inicial ficam em `imagens-onboarding/` (`imagem1.jpg`, `imagem2.jpg` e `imagem3.jpg`).
+As imagens da página inicial ficam em `src/assets/onboarding/` (`hero.jpg`, `features.jpg` e `cta.jpg`).
 
 ## Rotas
 
