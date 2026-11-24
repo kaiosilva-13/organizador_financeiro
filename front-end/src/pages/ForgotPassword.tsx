@@ -1,6 +1,7 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
+import { API_URL } from '../services/api';
 
 import AuthLayout from "../components/auth/AuthLayout";
 import Button from "../components/auth/Button";
@@ -10,10 +11,27 @@ function ForgotPassword() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    navigate("/verificar-codigo", { state: { email } });
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }), 
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao solicitar recuperação de senha.");
+      }
+      navigate("/verificar-codigo", { state: { email } });
+
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Não foi possível enviar o e-mail de recuperação.");
+    }
   }
 
   return (

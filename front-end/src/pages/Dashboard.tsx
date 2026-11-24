@@ -19,7 +19,7 @@ import EmptyStateCard from "../components/dashboard/EmptyStateCard";
 import SummaryCard from "../components/dashboard/SummaryCard";
 import AccountModal from "../components/modals/AccountModal";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
-import { API_URL } from "../lib/api";
+import { API_URL } from '../services/api';
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import type { Account, NewAccountInput } from "../types/account";
 

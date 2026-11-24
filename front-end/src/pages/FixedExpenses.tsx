@@ -12,7 +12,7 @@ import FixedExpensesTable from "../components/fixedExpenses/FixedExpensesTable";
 import AccountModal from "../components/modals/AccountModal";
 import TransactionsEmptyState from "../components/transactions/TransactionsEmptyState";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
-import { API_URL } from "../lib/api";
+import { API_URL } from '../services/api';
 import { formatCurrency } from "../lib/currency";
 import {
   getTodayISO,

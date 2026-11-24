@@ -38,17 +38,43 @@ Crie o banco `brasil` no PostgreSQL e use o usuário `bob` com a senha `bob1`, o
 
 O projeto usa `synchronize: true`, então a tabela `users` será criada automaticamente.
 
-## 4. Rodar
+## 4. Rodar com Docker Compose (Recomendado)
+No caso de rodar a aplicação completa (API NestJS, PostgreSQL e Mailpit) de forma isolada e automatizada através do Docker, é necessário utilizar na raiz do projeto os comandos do Docker
 
+Para subir o ambiente completo utilize:
+```powershell
+docker compose up --build -d
+```
+
+### Acompanhar os logs da API
+Para verificar o comportamento da aplicação em tempo real:
+
+```powershell
+docker compose logs -f api
+```
+
+### Derrubar os serviços
+Para parar os containers mantendo os dados salvos:
+
+```powershell
+docker compose down
+```
+
+### (Opcional) No caso de apagar tudo, incluindo os volumes de dados do banco para reiniciar o ambiente do zero:
+
+```powershell
+docker compose down -v
+```
+## 5. Rodar localmente (Sem Docker)
 ```powershell
 npm run start:dev
 ```
-
 Backend:
 
 http://localhost:3000
 
-## 5. Endpoints
+
+## 6. Endpoints
 
 ### Cadastro
 
@@ -99,7 +125,7 @@ Depois do Google, o backend redireciona para:
 http://localhost:5173/auth/callback?token=SEU_TOKEN
 ```
 
-## 6. Integração com React
+## 7. Integração com React
 
 ### Login
 
@@ -165,7 +191,7 @@ const response = await fetch('http://localhost:3000/auth/me', {
 const user = await response.json();
 ```
 
-## 7. Google Cloud / OAuth
+## 8. Google Cloud / OAuth
 
 No cliente OAuth do Google, o URI de redirecionamento autorizado precisa ser exatamente:
 
@@ -176,7 +202,7 @@ http://localhost:3000/auth/google/callback
 O frontend não chama o callback diretamente. Ele chama `/auth/google`, o backend envia para o Google e o Google retorna para o callback.
 
 
-## 8. Mostrar erros de login como pop-up no frontend
+## 9. Mostrar erros de login como pop-up no frontend
 
 O backend retorna mensagens HTTP adequadas. No React, você pode mostrar o erro sem alterar o visual atual usando `alert()`:
 

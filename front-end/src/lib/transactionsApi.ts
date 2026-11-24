@@ -6,7 +6,7 @@ import type {
   TransactionFilterValues,
   TransactionType,
 } from "../types/transaction";
-import { API_URL } from "./api";
+import { API_URL } from '../services/api';
 import { parseFilterAmount } from "./transactions";
 
 /**

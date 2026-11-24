@@ -10,7 +10,7 @@ import TransactionsAccountBar from "../components/transactions/TransactionsAccou
 import TransactionsEmptyState from "../components/transactions/TransactionsEmptyState";
 import TransactionsTable from "../components/transactions/TransactionsTable";
 import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
-import { API_URL } from "../lib/api";
+import { API_URL } from '../services/api';
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
 import { EMPTY_TRANSACTION_FILTERS } from "../lib/transactions";
 import {
