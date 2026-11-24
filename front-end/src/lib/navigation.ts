@@ -11,5 +11,9 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { key: "fixed-expenses", label: "gastos fixos", path: "/gastos-fixos" },
   { key: "goals", label: "metas financeiras" },
   { key: "purchases", label: "controle de compras" },
-  { key: "simulation", label: "simulação gastos futuros" },
+  {
+    key: "insights",
+    label: "insights financeiros",
+    path: "/insights-financeiros",
+  },
 ];
