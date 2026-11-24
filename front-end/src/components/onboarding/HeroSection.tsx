@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import heroImage from "../../../imagens-onboarding/imagem1.jpg";
+import heroImage from "../../assets/onboarding/hero.jpg";
 
 import ActionLink from "./ActionLink";
 import {
