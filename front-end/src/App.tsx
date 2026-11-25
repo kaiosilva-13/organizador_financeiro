@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import FinancialInsights from "./pages/FinancialInsights";
 import FixedExpenses from "./pages/FixedExpenses";
 import Transactions from "./pages/Transactions";
+import PurchasesControl from "./pages/PurchasesControl";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminSystemReport from "./pages/admin/AdminSystemReport";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -84,6 +85,7 @@ function AdminAccessGuard({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  // TODO [BACKEND / AUTH]: Rota /controle-de-compras liberada temporariamente sem autenticação para testes de front-end. Restringir acesso apenas a usuários autenticados após validação.
   return (
     <BrowserRouter>
       <Routes>
@@ -92,6 +94,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movimentacoes" element={<Transactions />} />
         <Route path="/gastos-fixos" element={<FixedExpenses />} />
+        {/* Acesso provisório para testes: reativar o bloqueio de autenticação desta rota após a validação (ver TODO [BACKEND / AUTH] no início de App). */}
+        <Route path="/controle-de-compras" element={<PurchasesControl />} />
         <Route path="/insights-financeiros" element={<FinancialInsights />} />
         <Route path="/cadastro" element={<Register />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
