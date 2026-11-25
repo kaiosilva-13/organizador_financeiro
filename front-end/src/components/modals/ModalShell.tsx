@@ -9,6 +9,8 @@ type ModalShellProps = {
   title: string;
   description?: string;
   icon?: ReactNode;
+  /** Permite trocar o tom do quadro do ícone (ex.: vermelho na exclusão). */
+  iconClassName?: string;
   size?: "sm" | "md" | "lg" | "xl";
   onClose: () => void;
   children: ReactNode;
@@ -33,6 +35,7 @@ function ModalShell({
   title,
   description,
   icon,
+  iconClassName = "bg-indigo-50 text-[#4F26E9]",
   size = "md",
   onClose,
   children,
@@ -95,7 +98,7 @@ function ModalShell({
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             {icon && (
-              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-[#4F26E9]">
+              <span className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClassName}`}>
                 {icon}
               </span>
             )}

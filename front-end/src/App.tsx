@@ -12,12 +12,70 @@ import Dashboard from "./pages/Dashboard";
 import FinancialInsights from "./pages/FinancialInsights";
 import FixedExpenses from "./pages/FixedExpenses";
 import Transactions from "./pages/Transactions";
+import PurchasesControl from "./pages/PurchasesControl";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminSystemReport from "./pages/admin/AdminSystemReport";
 import AdminUsers from "./pages/admin/AdminUsers";
 import { API_URL } from "./services/api";
 
 type AdminAccessStatus = "checking" | "admin" | "user" | "anonymous";
+type AuthAccessStatus = "checking" | "authenticated" | "anonymous";
+
+/**
+ * Guarda das rotas que exigem usuário autenticado.
+ *
+ * A sessão é confirmada no back-end (GET /auth/me) a cada acesso, em vez de
+ * confiar apenas na presença do token no localStorage. Sem token válido, o
+ * usuário é redirecionado para o login.
+ */
+function AuthenticatedRouteGuard({ children }: { children: ReactNode }) {
+  const [status, setStatus] = useState<AuthAccessStatus>("checking");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAccess() {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        if (isMounted) setStatus("anonymous");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem("access_token");
+          if (isMounted) setStatus("anonymous");
+          return;
+        }
+
+        if (isMounted) setStatus("authenticated");
+      } catch {
+        if (isMounted) setStatus("anonymous");
+      }
+    }
+
+    verifyAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (status === "checking") {
+    return null;
+  }
+
+  if (status === "anonymous") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 /**
  * Guarda das rotas administrativas.
@@ -92,6 +150,14 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movimentacoes" element={<Transactions />} />
         <Route path="/gastos-fixos" element={<FixedExpenses />} />
+        <Route
+          path="/controle-de-compras"
+          element={
+            <AuthenticatedRouteGuard>
+              <PurchasesControl />
+            </AuthenticatedRouteGuard>
+          }
+        />
         <Route path="/insights-financeiros" element={<FinancialInsights />} />
         <Route path="/cadastro" element={<Register />} />
         <Route path="/auth/callback" element={<AuthCallback />} />

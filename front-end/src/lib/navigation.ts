@@ -10,7 +10,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { key: "transactions", label: "movimentações", path: "/movimentacoes" },
   { key: "fixed-expenses", label: "gastos fixos", path: "/gastos-fixos" },
   { key: "goals", label: "metas financeiras" },
-  { key: "purchases", label: "controle de compras" },
+  { key: "purchases", label: "controle de compras", path: "/controle-de-compras" },
   {
     key: "insights",
     label: "insights financeiros",
