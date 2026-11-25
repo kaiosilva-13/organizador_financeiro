@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 
 import { formatCurrency } from "../../lib/currency";
-import { formatPurchaseDate, getTodayISO } from "../../lib/purchases";
+import {
+  PURCHASE_CATEGORY,
+  formatPurchaseDate,
+  getTodayISO,
+} from "../../lib/purchases";
 import { formatFileSize } from "../../lib/transactions";
 import type { Account } from "../../types/account";
 import type {
@@ -114,7 +118,9 @@ function PayInstallmentModalContent({
   const effectiveAccountId = selectedAccount?.id ?? "";
   // O pagamento é registrado na data atual, e não no vencimento da parcela.
   const paymentDate = getTodayISO();
-  const category = `Compra ${purchase.name}`;
+  // A despesa gerada em Movimentações usa sempre a categoria padrão.
+  const category = PURCHASE_CATEGORY;
+  const title = `Pagamento de ${purchase.name}`;
 
   useEffect(() => {
     const focusTimer = window.setTimeout(() => {
@@ -204,7 +210,10 @@ function PayInstallmentModalContent({
     setErrors({});
 
     try {
-      // TODO [BACKEND]: Conectar endpoint POST /api/purchases/:purchaseId/installments/:installmentId/pay. Esta regra de negócio deve: (1) marcar a parcela como PAGA gravando `paid_at` com a data atual do pagamento, (2) criar um registro de despesa na tabela de Movimentações, (3) debitar o saldo da conta financeira selecionada e (4) realizar o upload do comprovante (S3/Storage).
+      // POST /api/purchases/:purchaseId/installments/:installmentId/pay
+      // (multipart/form-data). Em uma única transação o servidor soma a parcela
+      // em `valor_pago_acumulado`, registra a despesa em Movimentações
+      // (categoria "Compra Parcelada"), debita a conta e salva o comprovante.
       await onSubmit({
         accountId: effectiveAccountId,
         receiptFile,
@@ -237,7 +246,7 @@ function PayInstallmentModalContent({
             value={formatPurchaseDate(paymentDate)}
             icon={CalendarDays}
           />
-          <SummaryItem label="Título" value={purchase.name} icon={FileText} />
+          <SummaryItem label="Título" value={title} icon={FileText} />
           <SummaryItem
             label="Valor"
             value={formatCurrency(installment.amount)}
