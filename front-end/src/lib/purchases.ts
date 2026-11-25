@@ -37,6 +37,16 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
+/** Data de hoje no formato `YYYY-MM-DD`, sem deslocamento de fuso horário. */
+export function getTodayISO(): string {
+  const now = new Date();
+  const offsetInMilliseconds = now.getTimezoneOffset() * 60 * 1000;
+
+  return new Date(now.getTime() - offsetInMilliseconds)
+    .toISOString()
+    .slice(0, 10);
+}
+
 /** Formata `YYYY-MM-DD` como `dd/mm/aaaa`. */
 export function formatPurchaseDate(value: string): string {
   if (!isValidISODate(value)) {

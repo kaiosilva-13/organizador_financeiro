@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { formatCurrency } from "../../lib/currency";
-import { formatPurchaseDate } from "../../lib/purchases";
+import { formatPurchaseDate, getTodayISO } from "../../lib/purchases";
 import { formatFileSize } from "../../lib/transactions";
 import type { Account } from "../../types/account";
 import type {
@@ -112,7 +112,8 @@ function PayInstallmentModalContent({
     accounts[0] ??
     null;
   const effectiveAccountId = selectedAccount?.id ?? "";
-  const paymentDate = installment.dueDate;
+  // O pagamento é registrado na data atual, e não no vencimento da parcela.
+  const paymentDate = getTodayISO();
   const category = `Compra ${purchase.name}`;
 
   useEffect(() => {
@@ -203,10 +204,11 @@ function PayInstallmentModalContent({
     setErrors({});
 
     try {
-      // TODO [BACKEND]: Conectar endpoint POST /api/purchases/:purchaseId/installments/:installmentId/pay. Esta regra de negócio deve: (1) marcar a parcela como PAGA, (2) criar um registro de despesa na tabela de Movimentações, (3) debitar o saldo da conta financeira selecionada e (4) realizar o upload do comprovante (S3/Storage).
+      // TODO [BACKEND]: Conectar endpoint POST /api/purchases/:purchaseId/installments/:installmentId/pay. Esta regra de negócio deve: (1) marcar a parcela como PAGA gravando `paid_at` com a data atual do pagamento, (2) criar um registro de despesa na tabela de Movimentações, (3) debitar o saldo da conta financeira selecionada e (4) realizar o upload do comprovante (S3/Storage).
       await onSubmit({
         accountId: effectiveAccountId,
         receiptFile,
+        paidAt: paymentDate,
       });
     } catch (error) {
       setErrors({

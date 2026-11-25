@@ -19,8 +19,8 @@ visuais. O contrato de dados e a estrutura relacional sugerida estão em
 
 O endpoint de pagamento deve executar, na mesma transação de banco de dados:
 
-1. Marcar a parcela como `PAGA` e gravar `paid_at`, `account_id` e o
-   comprovante.
+1. Marcar a parcela como `PAGA` e gravar `paid_at` com a data atual do
+   pagamento (não o vencimento), além de `account_id` e o comprovante.
 2. Criar uma despesa em Movimentações com o título `Pagamento de <compra>` e a
    categoria `Compra <compra>`.
 3. Debitar o valor da parcela do saldo da conta financeira escolhida.

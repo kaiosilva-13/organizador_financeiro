@@ -270,8 +270,9 @@ function PurchasesControl() {
        * fonte da verdade e deverá executar as quatro etapas descritas no TODO
        * de PayInstallmentModal.tsx de forma atômica.
        *
-       * O protótipo exibe o vencimento como data do pagamento; o servidor deve
-       * registrar a data real do pagamento quando a integração existir.
+       * `input.paidAt` é a data atual em que o pagamento foi confirmado (não o
+       * vencimento da parcela); o servidor deve persistir esse valor em
+       * `paid_at` junto com a movimentação gerada.
        */
       setPurchases((currentPurchases) =>
         currentPurchases.map((currentPurchase) => {
@@ -286,7 +287,7 @@ function PurchasesControl() {
                 ? {
                     ...currentInstallment,
                     status: "paid",
-                    paidAt: installment.dueDate,
+                    paidAt: input.paidAt,
                     accountId: account.id,
                     accountName: account.name,
                     receiptName: input.receiptFile?.name ?? null,

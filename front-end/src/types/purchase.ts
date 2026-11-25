@@ -54,7 +54,10 @@ export type PurchaseInstallment = {
   dueDate: string;
   amount: number;
   status: PurchaseInstallmentStatus;
-  /** Data em que o pagamento foi registrado (`YYYY-MM-DD`), quando pago. */
+  /**
+   * Data em que o pagamento foi registrado (`YYYY-MM-DD`), quando pago.
+   * Corresponde ao dia atual no momento do pagamento, não ao vencimento.
+   */
   paidAt: string | null;
   /** Conta usada no pagamento, quando pago. */
   accountId: string | null;
@@ -87,8 +90,10 @@ export type PurchaseFormInput = {
   endDate: string;
 };
 
-/** Conta e comprovante escolhidos ao registrar o pagamento de uma parcela. */
+/** Conta, comprovante e data efetiva do pagamento de uma parcela. */
 export type InstallmentPaymentInput = {
   accountId: string;
   receiptFile: File | null;
+  /** Data atual em que o pagamento foi confirmado (`YYYY-MM-DD`). */
+  paidAt: string;
 };
