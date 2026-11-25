@@ -22,30 +22,6 @@ import type {
 } from "../types/purchase";
 
 /**
- * Contas de demonstração usadas apenas quando não há sessão válida.
- *
- * O acesso a esta rota está liberado temporariamente para testes de front-end,
- * então o fluxo de pagamento precisa de contas para simular o débito.
- *
- * TODO [BACKEND / AUTH]: Remover este fallback quando o bloqueio de
- * autenticação for reativado e carregar somente as contas do usuário logado.
- */
-const DEMO_ACCOUNTS: Account[] = [
-  {
-    id: "demo-conta-nubank",
-    name: "Conta banco Nubank",
-    type: "Conta Corrente",
-    balance: 1250,
-  },
-  {
-    id: "demo-carteira",
-    name: "Carteira",
-    type: "Dinheiro (Espécie)",
-    balance: 480,
-  },
-];
-
-/**
  * Persistência provisória no navegador para manter o fluxo testável entre
  * recarregamentos. Deve ser substituída pela API quando o back-end expuser os
  * endpoints de compras.
@@ -100,7 +76,7 @@ function PurchasesControl() {
     () => purchases[0]?.id ?? null,
   );
 
-  const [accounts, setAccounts] = useState<Account[]>(DEMO_ACCOUNTS);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [feedback, setFeedback] = useState("");
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -130,11 +106,8 @@ function PurchasesControl() {
     async function loadAccounts() {
       const token = localStorage.getItem("access_token");
 
-      // Acesso provisório sem login: mantém as contas de demonstração.
       if (!token) {
-        if (isMounted) {
-          setAccounts(DEMO_ACCOUNTS);
-        }
+        window.location.replace("/login");
         return;
       }
 
@@ -144,19 +117,8 @@ function PurchasesControl() {
         });
 
         if (response.status === 401) {
-          /*
-           * Acesso provisório: um token expirado não deve expulsar o testador
-           * para o login. Removemos o token inválido e seguimos com as contas
-           * de demonstração.
-           *
-           * TODO [BACKEND / AUTH]: redirecionar para /login quando a
-           * autenticação for reativada.
-           */
           localStorage.removeItem("access_token");
-
-          if (isMounted) {
-            setAccounts(DEMO_ACCOUNTS);
-          }
+          window.location.replace("/login");
           return;
         }
 
@@ -178,9 +140,8 @@ function PurchasesControl() {
       } catch (error) {
         console.error("Erro ao carregar contas do Controle de Compras:", error);
 
-        // Mantém as contas de demonstração para não interromper os testes.
         if (isMounted) {
-          setAccounts(DEMO_ACCOUNTS);
+          setAccounts([]);
         }
       }
     }

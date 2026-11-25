@@ -40,7 +40,8 @@ O endpoint de pagamento deve executar, na mesma transação de banco de dados:
 
 ## Autenticação
 
-A rota `/controle-de-compras` está liberada temporariamente sem autenticação
-para os testes de front-end. Ao reativar o bloqueio, remover também o fallback
-de contas de demonstração em `src/pages/PurchasesControl.tsx` e envolver a rota
-em um guard autenticado em `src/App.tsx`.
+A rota `/controle-de-compras` está protegida por `AuthenticatedRouteGuard` em
+`src/App.tsx`: a sessão é validada em `GET /auth/me` e, sem token válido, o
+usuário é redirecionado para `/login`. As contas financeiras são carregadas
+somente de `GET /api/accounts` com o token do usuário; não há mais contas de
+demonstração.

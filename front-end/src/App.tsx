@@ -19,6 +19,63 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import { API_URL } from "./services/api";
 
 type AdminAccessStatus = "checking" | "admin" | "user" | "anonymous";
+type AuthAccessStatus = "checking" | "authenticated" | "anonymous";
+
+/**
+ * Guarda das rotas que exigem usuário autenticado.
+ *
+ * A sessão é confirmada no back-end (GET /auth/me) a cada acesso, em vez de
+ * confiar apenas na presença do token no localStorage. Sem token válido, o
+ * usuário é redirecionado para o login.
+ */
+function AuthenticatedRouteGuard({ children }: { children: ReactNode }) {
+  const [status, setStatus] = useState<AuthAccessStatus>("checking");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAccess() {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        if (isMounted) setStatus("anonymous");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem("access_token");
+          if (isMounted) setStatus("anonymous");
+          return;
+        }
+
+        if (isMounted) setStatus("authenticated");
+      } catch {
+        if (isMounted) setStatus("anonymous");
+      }
+    }
+
+    verifyAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (status === "checking") {
+    return null;
+  }
+
+  if (status === "anonymous") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 /**
  * Guarda das rotas administrativas.
@@ -85,7 +142,6 @@ function AdminAccessGuard({ children }: { children: ReactNode }) {
 }
 
 function App() {
-  // TODO [BACKEND / AUTH]: Rota /controle-de-compras liberada temporariamente sem autenticação para testes de front-end. Restringir acesso apenas a usuários autenticados após validação.
   return (
     <BrowserRouter>
       <Routes>
@@ -94,8 +150,14 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movimentacoes" element={<Transactions />} />
         <Route path="/gastos-fixos" element={<FixedExpenses />} />
-        {/* Acesso provisório para testes: reativar o bloqueio de autenticação desta rota após a validação (ver TODO [BACKEND / AUTH] no início de App). */}
-        <Route path="/controle-de-compras" element={<PurchasesControl />} />
+        <Route
+          path="/controle-de-compras"
+          element={
+            <AuthenticatedRouteGuard>
+              <PurchasesControl />
+            </AuthenticatedRouteGuard>
+          }
+        />
         <Route path="/insights-financeiros" element={<FinancialInsights />} />
         <Route path="/cadastro" element={<Register />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
