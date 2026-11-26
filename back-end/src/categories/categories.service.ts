@@ -17,6 +17,7 @@ const DEFAULT_CATEGORIES = [
   { nome: 'Lazer', cor: '#DB2777' },
   { nome: 'Educação', cor: '#CA8A04' },
   { nome: 'Gastos Fixos', cor: '#030862' },
+  { nome: 'Compra Parcelada', cor: '#9333EA' },
   { nome: 'Outros', cor: '#475569' },
 ];
 
