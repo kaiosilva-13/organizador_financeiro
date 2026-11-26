@@ -37,9 +37,11 @@ function StatusBadge({ status }: { status: PurchaseInstallmentStatus }) {
 
 function InstallmentAction({
   installment,
+  canPay,
   onPay,
 }: {
   installment: PurchaseInstallment;
+  canPay: boolean;
   onPay: (installment: PurchaseInstallment) => void;
 }) {
   if (installment.status === "paid") {
@@ -47,6 +49,15 @@ function InstallmentAction({
       <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
         <Check size={14} aria-hidden="true" />
         Parcela paga
+      </span>
+    );
+  }
+
+  // As parcelas são pagas em ordem: só a próxima pendente pode ser paga.
+  if (!canPay) {
+    return (
+      <span className="text-xs font-medium text-slate-400">
+        Aguardando parcela anterior
       </span>
     );
   }
@@ -77,6 +88,9 @@ function PurchaseInstallmentsTable({
     purchase.totalAmount,
     count,
   );
+  const nextPendingId = purchase.installments.find(
+    (installment) => installment.status === "pending",
+  )?.id;
 
   return (
     <section
@@ -173,7 +187,11 @@ function PurchaseInstallmentsTable({
                 </td>
 
                 <td className="px-5 py-3.5">
-                  <InstallmentAction installment={installment} onPay={onPay} />
+                  <InstallmentAction
+                    installment={installment}
+                    canPay={installment.id === nextPendingId}
+                    onPay={onPay}
+                  />
                 </td>
               </tr>
             ))}
@@ -206,7 +224,11 @@ function PurchaseInstallmentsTable({
                 {formatCurrency(installment.amount)}
               </span>
 
-              <InstallmentAction installment={installment} onPay={onPay} />
+              <InstallmentAction
+                    installment={installment}
+                    canPay={installment.id === nextPendingId}
+                    onPay={onPay}
+                  />
             </div>
           </li>
         ))}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Plus } from "lucide-react";
+import { AlertCircle, Loader2, Plus } from "lucide-react";
 
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import DeletePurchaseModal from "../components/purchases/DeletePurchaseModal";
@@ -9,9 +9,15 @@ import PurchaseEmptyState from "../components/purchases/PurchaseEmptyState";
 import PurchaseFormModal from "../components/purchases/PurchaseFormModal";
 import PurchaseInstallmentsTable from "../components/purchases/PurchaseInstallmentsTable";
 import PurchaseSummaryCard from "../components/purchases/PurchaseSummaryCard";
+import { useAuthenticatedUser } from "../hooks/useAuthenticatedUser";
 import { formatCurrency } from "../lib/currency";
 import { DASHBOARD_NAV_ITEMS } from "../lib/navigation";
-import { buildPurchase } from "../lib/purchases";
+import {
+  createPurchase,
+  deletePurchase,
+  fetchPurchases,
+  payPurchaseInstallment,
+} from "../lib/purchasesApi";
 import { API_URL } from "../services/api";
 import type { Account } from "../types/account";
 import type {
@@ -21,60 +27,14 @@ import type {
   PurchaseInstallment,
 } from "../types/purchase";
 
-/**
- * Persistência provisória no navegador para manter o fluxo testável entre
- * recarregamentos. Deve ser substituída pela API quando o back-end expuser os
- * endpoints de compras.
- */
-const PURCHASES_STORAGE_KEY = "organizae:purchases";
-
-function isStoredPurchase(value: unknown): value is Purchase {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Partial<Purchase>;
-
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.totalAmount === "number" &&
-    typeof candidate.startDate === "string" &&
-    typeof candidate.endDate === "string" &&
-    Array.isArray(candidate.installments)
-  );
-}
-
-function loadStoredPurchases(): Purchase[] {
-  try {
-    const raw = localStorage.getItem(PURCHASES_STORAGE_KEY);
-
-    if (!raw) {
-      return [];
-    }
-
-    const parsed: unknown = JSON.parse(raw);
-
-    return Array.isArray(parsed) ? parsed.filter(isStoredPurchase) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Página de Controle de Compras.
- *
- * Nesta primeira versão todo o fluxo (cadastro, cronograma, pagamento e
- * exclusão) roda no front-end e é persistido em localStorage, conforme o
- * escopo de validação visual. Os pontos de integração com o back-end estão
- * marcados com `TODO [BACKEND]` ao longo do arquivo e dos componentes.
- */
 function PurchasesControl() {
-  // TODO [BACKEND]: Substituir estado local por chamada GET /api/purchases para carregar as compras parceladas e seus cronogramas do banco de dados.
-  const [purchases, setPurchases] = useState<Purchase[]>(loadStoredPurchases);
+  const userName = useAuthenticatedUser();
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(
-    () => purchases[0]?.id ?? null,
+    null,
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [feedback, setFeedback] = useState("");
@@ -93,12 +53,40 @@ function PurchasesControl() {
   );
 
   useEffect(() => {
-    try {
-      localStorage.setItem(PURCHASES_STORAGE_KEY, JSON.stringify(purchases));
-    } catch (error) {
-      console.error("Não foi possível salvar as compras localmente:", error);
+    let isMounted = true;
+
+    async function loadPurchases() {
+      try {
+        const data = await fetchPurchases();
+
+        if (isMounted) {
+          setPurchases(data);
+          setSelectedPurchaseId(data[0]?.id ?? null);
+          setLoadError("");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar as compras:", error);
+
+        if (isMounted) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar as compras.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [purchases]);
+
+    loadPurchases();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -171,15 +159,18 @@ function PurchasesControl() {
     setIsFormModalOpen(false);
   }, []);
 
-  const handleCreatePurchase = useCallback((input: PurchaseFormInput) => {
-    // TODO [BACKEND]: Conectar endpoint POST /api/purchases para persistir a nova compra e gerar automaticamente as parcelas no banco de dados.
-    const purchase = buildPurchase(input);
+  const handleCreatePurchase = useCallback(
+    async (input: PurchaseFormInput) => {
+      // Lança erro em caso de falha: o modal exibe a mensagem ao usuário.
+      const purchase = await createPurchase(input);
 
-    setPurchases((currentPurchases) => [purchase, ...currentPurchases]);
-    setSelectedPurchaseId(purchase.id);
-    setIsFormModalOpen(false);
-    setFeedback(`Compra "${purchase.name}" cadastrada com sucesso.`);
-  }, []);
+      setPurchases((currentPurchases) => [purchase, ...currentPurchases]);
+      setSelectedPurchaseId(purchase.id);
+      setIsFormModalOpen(false);
+      setFeedback(`Compra "${purchase.name}" cadastrada com sucesso.`);
+    },
+    [],
+  );
 
   const handleSwitchPurchase = useCallback(() => {
     if (purchases.length < 2) {
@@ -206,7 +197,7 @@ function PurchasesControl() {
   }, []);
 
   const handlePayInstallment = useCallback(
-    (input: InstallmentPaymentInput) => {
+    async (input: InstallmentPaymentInput) => {
       const purchase = selectedPurchase;
       const installment = payingInstallment;
 
@@ -225,47 +216,24 @@ function PurchasesControl() {
       if (!account) {
         throw new Error("Selecione uma conta financeira válida.");
       }
+      const result = await payPurchaseInstallment(
+        purchase.id,
+        installment.id,
+        input,
+      );
 
-      /*
-       * Atualização otimista apenas no front-end. O endpoint dedicado será a
-       * fonte da verdade e deverá executar as quatro etapas descritas no TODO
-       * de PayInstallmentModal.tsx de forma atômica.
-       *
-       * `input.paidAt` é a data atual em que o pagamento foi confirmado (não o
-       * vencimento da parcela); o servidor deve persistir esse valor em
-       * `paid_at` junto com a movimentação gerada.
-       */
       setPurchases((currentPurchases) =>
-        currentPurchases.map((currentPurchase) => {
-          if (currentPurchase.id !== purchase.id) {
-            return currentPurchase;
-          }
-
-          return {
-            ...currentPurchase,
-            installments: currentPurchase.installments.map((currentInstallment) =>
-              currentInstallment.id === installment.id
-                ? {
-                    ...currentInstallment,
-                    status: "paid",
-                    paidAt: input.paidAt,
-                    accountId: account.id,
-                    accountName: account.name,
-                    receiptName: input.receiptFile?.name ?? null,
-                  }
-                : currentInstallment,
-            ),
-          };
-        }),
+        currentPurchases.map((currentPurchase) =>
+          currentPurchase.id === result.purchase.id
+            ? result.purchase
+            : currentPurchase,
+        ),
       );
 
       setAccounts((currentAccounts) =>
         currentAccounts.map((currentAccount) =>
-          currentAccount.id === account.id
-            ? {
-                ...currentAccount,
-                balance: currentAccount.balance - installment.amount,
-              }
+          currentAccount.id === result.accountId
+            ? { ...currentAccount, balance: result.accountBalance }
             : currentAccount,
         ),
       );
@@ -286,14 +254,16 @@ function PurchasesControl() {
     setIsDeleteModalOpen(false);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     const purchase = selectedPurchase;
 
     if (!purchase) {
       return;
     }
 
-    // TODO [BACKEND]: Conectar endpoint DELETE /api/purchases/:id para remover a compra e suas parcelas pendentes do banco de dados.
+    // Lança erro em caso de falha: a modal exibe a mensagem ao usuário.
+    await deletePurchase(purchase.id);
+
     const purchaseIndex = purchases.findIndex(
       (currentPurchase) => currentPurchase.id === purchase.id,
     );
@@ -315,7 +285,11 @@ function PurchasesControl() {
 
   return (
     <div className="min-h-svh bg-slate-50">
-      <DashboardNavbar items={DASHBOARD_NAV_ITEMS} activeKey="purchases" />
+      <DashboardNavbar
+        items={DASHBOARD_NAV_ITEMS}
+        activeKey="purchases"
+        userName={userName}
+      />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -347,7 +321,27 @@ function PurchasesControl() {
         )}
 
         <div className="mt-8">
-          {selectedPurchase ? (
+          {isLoading ? (
+            <div
+              role="status"
+              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-16 text-sm text-slate-500 shadow-sm"
+            >
+              <Loader2 size={18} aria-hidden="true" className="animate-spin" />
+              Carregando compras...
+            </div>
+          ) : loadError ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm text-rose-700"
+            >
+              <AlertCircle
+                size={17}
+                aria-hidden="true"
+                className="mt-0.5 shrink-0"
+              />
+              <span>{loadError}</span>
+            </div>
+          ) : selectedPurchase ? (
             <div className="flex flex-col gap-5">
               <PurchaseSummaryCard
                 purchase={selectedPurchase}
